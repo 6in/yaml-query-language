@@ -393,74 +393,56 @@ LEFT JOIN products p ON oi.product_id = p.product_id
 #### YQL構文
 ```yaml
 where:
-  - and: "condition1"
-  - and: "condition2"
-  - or: "condition3"
-  - and:                              # ネストした条件
-      - and: "condition4"
-      - or: "condition5"
+  - "condition1"                     # 基本条件（ANDで結合）
+  - "condition2"                     # AND条件として結合
+  - "condition3 OR condition4"       # OR条件（文字列内で記述）
+  - "condition5 AND (condition6 OR condition7)"  # 複雑な条件も文字列内で記述
 ```
 
 #### 変換ルール
 
-**明示的な形式:**
+**全DB共通:**
 ```sql
 -- YQL:
 -- where:
---   - and: "c.status = 'active'"
---   - and: "c.created_at >= DATE('now', '-1 year')"
---   - or: "c.customer_type = 'premium'"
---   - and:
---       - and: "c.region = 'tokyo'"
---       - or: "c.region = 'osaka'"
+--   - "c.status = 'active'"
+--   - "c.created_at >= DATE('now', '-1 year')"
+--   - "c.customer_type = 'premium' OR c.annual_revenue >= 1000000"
+--   - "c.region = 'tokyo' OR c.region = 'osaka'"
 
 -- PostgreSQL/MySQL/SQL Server:
-WHERE (c.status = 'active' AND c.created_at >= DATE('now', '-1 year'))
-  OR (c.customer_type = 'premium' AND (c.region = 'tokyo' OR c.region = 'osaka'))
+WHERE c.status = 'active'
+  AND c.created_at >= DATE('now', '-1 year')
+  AND (c.customer_type = 'premium' OR c.annual_revenue >= 1000000)
+  AND (c.region = 'tokyo' OR c.region = 'osaka')
 ```
 
 **結合ルール:**
-- 配列内の条件は、記述順序で結合されます
-- 連続する`and:`は`AND`で結合されます（例: `[and: A, and: B]` → `A AND B`）
-- 連続する`or:`は`OR`で結合されます（例: `[or: A, or: B]` → `A OR B`）
-- `and:`と`or:`が混在する場合、SQLの演算子優先順位（`AND`が`OR`より優先）を考慮して括弧を自動的に追加します
-- 結合例:
-  - `[and: A, and: B, or: C]` → `(A AND B) OR C`
-  - `[and: A, or: B, and: C]` → `A OR (B AND C)`
-  - `[and: A, and: B, or: C, and: D]` → `(A AND B) OR (C AND D)`
+- 配列内の条件は、すべて`AND`で結合されます
+- `OR`条件を記述する場合は、文字列内で`OR`を使用します
+- 複雑な条件（括弧を含む）も文字列内で記述します
+- パーサーの実装を簡素化するため、この形式を採用しています
 
 **注意事項:**
-- 条件の論理関係を明確にするため、`and:`/`or:`を明示的に記述します
-- `and:`は冗長かもしれませんが、明示性のために使用可能
-- ネストした条件は括弧で囲まれて結合されます
+- 複数の条件はデフォルトで`AND`で結合されます
+- `OR`条件を記述する場合は、文字列内で`OR`を使用します
+- 括弧を含む複雑な条件も文字列内で記述可能です
 
 ### 6.2 パラメータによる分岐条件
+
+**重要:** パラメータによる分岐は、テンプレートエンジン（MyBatis、JinjaSQL等）の形式として出力されます。動的SQLの生成はテンプレートエンジンに任せます。
 
 #### YQL構文
 ```yaml
 where:
-  - and: "fixed_condition"           # 固定条件
-  - if: "${param_name}"
-    then:
-      and: "dynamic_condition"
-  - if: "${param_value} == 'value'"
-    then:
-      or: "conditional_condition"
+  - "c.status = 'active'"            # 固定条件
+  - if: "${name_filter}"
+    then: "c.name ILIKE #{nameFilter}"
+  - if: "${customer_type} == 'premium'"
+    then: "c.annual_revenue >= 1000000"
 ```
 
 #### 変換ルール
-
-**明示的な形式の例:**
-```yaml
-where:
-  - and: "c.status = 'active'"
-  - if: "${name_filter}"
-    then:
-      and: "c.name ILIKE #{nameFilter}"
-  - if: "${customer_type} == 'premium'"
-    then:
-      or: "c.annual_revenue >= 1000000"
-```
 
 **MyBatis XML生成例:**
 ```xml
@@ -470,7 +452,7 @@ where:
     AND c.name ILIKE #{nameFilter}
   </if>
   <if test="customerType != null and customerType == 'premium'">
-    OR c.annual_revenue >= 1000000
+    AND c.annual_revenue >= 1000000
   </if>
 </where>
 ```
@@ -482,7 +464,7 @@ WHERE c.status = 'active'
   AND c.name ILIKE {{ name_filter }}
 {% endif %}
 {% if customer_type == 'premium' %}
-  OR c.annual_revenue >= 1000000
+  AND c.annual_revenue >= 1000000
 {% endif %}
 ```
 
@@ -490,25 +472,25 @@ WHERE c.status = 'active'
 - パラメータによる分岐はWHERE句でのみ許可
 - カラム句（SELECT）での分岐は禁止
 - パラメータは`#{paramName}`形式でバインド
-- `if-then`構文内でも`and:`/`or:`を使用可能
+- **動的SQLの生成はテンプレートエンジンに任せます**（YQLパーサーはテンプレート形式を出力するのみ）
 
 ### 6.3 比較演算子
 
 #### YQL構文
 ```yaml
 where:
-  - and: "column = value"
-  - and: "column != value"
-  - and: "column > value"
-  - and: "column >= value"
-  - and: "column < value"
-  - and: "column <= value"
-  - or: "column IN (value1, value2)"
-  - and: "column NOT IN (value1, value2)"
-  - and: "column IS NULL"
-  - and: "column IS NOT NULL"
-  - and: "column LIKE 'pattern'"
-  - and: "column BETWEEN value1 AND value2"
+  - "column = value"
+  - "column != value"
+  - "column > value"
+  - "column >= value"
+  - "column < value"
+  - "column <= value"
+  - "column IN (value1, value2)"
+  - "column NOT IN (value1, value2)"
+  - "column IS NULL"
+  - "column IS NOT NULL"
+  - "column LIKE 'pattern'"
+  - "column BETWEEN value1 AND value2"
 ```
 
 #### 変換ルール
@@ -549,7 +531,7 @@ query:
     - email: email
   from: c: customers
   where:
-    - and: "EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id AND o.order_date >= DATE('now', '-30 days'))"
+    - "EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id AND o.order_date >= DATE('now', '-30 days'))"
 ```
 
 **変換ルール（全DB共通）:**
@@ -575,17 +557,16 @@ query:
     - email: email
   from: c: customers
   where:
-    - and:
-        field: customer_id
-        operator: IN
-        subquery:
-          select:
-            - customer_id: customer_id
-          from: orders
-          where:
-            - and: "order_date >= DATE('now', '-30 days')"
-          group_by: [customer_id]
-          having: ["COUNT(*) >= 3"]
+    - field: customer_id
+      operator: IN
+      subquery:
+        select:
+          - customer_id: customer_id
+        from: orders
+        where:
+          - "order_date >= DATE('now', '-30 days')"
+        group_by: [customer_id]
+        having: ["COUNT(*) >= 3"]
 ```
 
 **変換ルール（全DB共通）:**
@@ -790,6 +771,11 @@ OFFSET #{offset} ROWS FETCH NEXT #{perPage} ROWS ONLY
 ## 11. WITH句（CTE）の変換
 
 **重要:** CTE（Common Table Expression）内のSELECT文は、本仕様書の2章（SELECT句）から10章（LIMIT/OFFSET句）までの基礎定義に従って記述されます。
+
+**パーサーの実装方針:**
+- CTE内のSELECT文は再帰的に解析します
+- テーブル/カラムの存在チェックと依存関係のチェックを行います
+- 動的SQLの生成はテンプレートエンジンに任せます（テンプレート形式を出力するのみ）
 
 ### 11.1 基本CTE
 
