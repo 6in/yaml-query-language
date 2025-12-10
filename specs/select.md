@@ -216,19 +216,17 @@ END AS customer_segment
 
 #### YQL構文
 ```yaml
-from: table_name                    # エイリアスなし
-from: alias: table_name            # エイリアス付き（エイリアスを先頭に記述）
-from: "schema.table_name"           # エイリアスなし（スキーマ付き）
-from: alias: "schema.table_name"   # エイリアス付き（スキーマ付き、エイリアスを先頭に記述）
+from: alias: table_name            # エイリアス必須（エイリアスを先頭に記述）
+from: alias: "schema.table_name"   # スキーマ付き（エイリアス必須）
 ```
+
+**注意: FROM句ではエイリアスが必須です。**
 
 #### 変換ルール
 
 | YQL | PostgreSQL | MySQL | SQL Server |
 |-----|-----------|-------|------------|
-| `table_name` | `table_name` | `table_name` | `table_name` |
 | `alias: table_name` | `table_name alias` | `table_name alias` | `table_name alias` |
-| `"schema.table"` | `schema.table` | `schema.table` | `schema.table` |
 | `alias: "schema.table"` | `schema.table alias` | `schema.table alias` | `schema.table alias` |
 
 **生成例:**
@@ -241,6 +239,7 @@ from: alias: "schema.table_name"   # エイリアス付き（スキーマ付き�
 ```
 
 **注意事項:**
+- **エイリアスは必須です**（パーサー実装の一貫性のため）
 - テーブル名に予約語を使用する場合は引用符で囲む
 - スキーマ名は必要に応じて引用符で囲む
 - エイリアスは先頭に記述する形式（`alias: table_name`）
@@ -561,11 +560,11 @@ query:
       operator: IN
       subquery:
         select:
-          - customer_id: customer_id
-        from: orders
+          - customer_id: o.customer_id
+        from: o: orders
         where:
-          - "order_date >= DATE('now', '-30 days')"
-        group_by: [customer_id]
+          - "o.order_date >= DATE('now', '-30 days')"
+        group_by: [o.customer_id]
         having: ["COUNT(*) >= 3"]
 ```
 
@@ -768,6 +767,140 @@ OFFSET #{offset} ROWS FETCH NEXT #{perPage} ROWS ONLY
 - 計算式はコンパイル時に評価される
 - パラメータは`#{paramName}`形式でバインド
 
+### 10.3 pagination構文（ページング自動化）
+
+ページング処理を簡潔に記述するための`pagination`構文を提供します。`pagination`構文は、内部的に`limit`と`offset`に展開されます。
+
+#### YQL構文
+```yaml
+query:
+  pagination:
+    page: "#{page:1}"           # ページ番号（デフォルト: 1）
+    per_page: "#{per_page:20}"  # 1ページあたりの件数（デフォルト: 20）
+  select:
+    - id: c.id
+    - name: c.name
+  from: c: customers
+  order_by:
+    - field: c.created_at
+      direction: DESC
+```
+
+#### 変換ルール
+
+`pagination`構文は、内部的に以下のように展開されます：
+
+```yaml
+# pagination構文
+pagination:
+  page: "#{page:1}"
+  per_page: "#{per_page:20}"
+
+# 内部的に以下に展開される:
+limit: "#{per_page:20}"
+offset: "$((${page:1} - 1) * ${per_page:20})"
+```
+
+**PostgreSQL:**
+```sql
+LIMIT #{per_page} OFFSET #{(page - 1) * per_page}
+```
+
+**MySQL:**
+```sql
+LIMIT #{(page - 1) * per_page}, #{per_page}
+```
+
+**SQL Server:**
+```sql
+OFFSET #{(page - 1) * per_page} ROWS FETCH NEXT #{per_page} ROWS ONLY
+```
+
+**注意事項:**
+- SQL Serverでは`ORDER BY`が必須です。`pagination`が定義されている場合、`order_by`が存在しない場合はエラーを発生させます
+- 計算式（`offset = (page - 1) * per_page`）は、テンプレートエンジンで評価されます
+- パラメータが渡されない場合、デフォルト値を使用します
+
+#### パラメータのカスタマイズ
+
+パラメータ名はカスタマイズ可能です：
+
+```yaml
+query:
+  pagination:
+    page: "#{current_page:1}"
+    per_page: "#{items_per_page:20}"
+  # ...
+```
+
+#### paginationが定義されていない場合
+
+`pagination`が定義されていない場合、ページングは適用されません（LIMIT/OFFSETなし）。
+
+```yaml
+query:
+  select:
+    - id: c.id
+    - name: c.name
+  from: c: customers
+  # paginationなし = LIMIT/OFFSETなし（全件取得）
+```
+
+**注意**: `pagination: false`のような明示的な無効化は不要です。`pagination`が定義されていない = ページングなし（デフォルト）と判断します。
+
+#### 明示的なLIMIT/OFFSETとの関係
+
+`pagination`と明示的な`limit`/`offset`が同時に定義されている場合、エラーを発生させます。
+
+```yaml
+query:
+  pagination:
+    page: "#{page:1}"
+    per_page: "#{per_page:20}"
+  limit: 100  # エラー: paginationとlimit/offsetは同時に使用できません
+```
+
+**理由**: 意図の明確化のため。どちらを使うか明確に判断できるようにする。
+
+#### 推奨パターン
+
+- **ページング**: `pagination`構文を使用
+- **上限付き取得**: 既存の`limit`を使用（例: `limit: "#{max_rows:100}"`）
+- **単一レコード取得**: 既存の`limit: 1`を使用
+- **全件取得**: `limit`/`offset`なし（デフォルト）
+
+#### 使用例
+
+**基本的なページング:**
+```yaml
+query:
+  pagination:
+    page: "#{page:1}"
+    per_page: "#{per_page:20}"
+  select:
+    - id: c.id
+    - name: c.name
+  from: c: customers
+  order_by:
+    - field: c.created_at
+      direction: DESC
+```
+
+**カスタムパラメータ名:**
+```yaml
+query:
+  pagination:
+    page: "#{current_page:1}"
+    per_page: "#{items_per_page:20}"
+  select:
+    - id: c.id
+    - name: c.name
+  from: c: customers
+  order_by:
+    - field: c.created_at
+      direction: DESC
+```
+
 ## 11. WITH句（CTE）の変換
 
 **重要:** CTE（Common Table Expression）内のSELECT文は、本仕様書の2章（SELECT句）から10章（LIMIT/OFFSET句）までの基礎定義に従って記述されます。
@@ -786,7 +919,7 @@ with_clauses:
     select:
       - column1: column1
       - column2: column2
-    from: table_name
+    from: t: table_name
     where: ["condition"]
     group_by: [column1]
 ```
@@ -938,21 +1071,37 @@ query:
 #### YQL構文
 ```yaml
 where:
-  - "column = #{paramName}"
-  - "column IN (${paramArray})"
+  - "column = #{paramName}"           # 単一値パラメータ
+  - "column IN (${paramArray})"       # 配列パラメータ
+  - if: "${conditionParam}"           # 条件分岐用パラメータ
+    then: "column = #{valueParam}"
 ```
 
 #### 変換ルール
 
-**単一値パラメータ:**
-- `#{paramName}` → `?` (PreparedStatement)
-- パラメータ名はキャメルケースからスネークケースに変換
+**パラメータ記法の使い分け:**
 
-**配列パラメータ:**
-- `IN (${paramArray})` → `IN (?, ?, ?)` (要素数に応じて展開)
+1. **`#{paramName}` - 単一値パラメータ（値のバインド）**
+   - `#{paramName}` → `?` (PreparedStatement)
+   - パラメータ名はキャメルケースからスネークケースに変換
+   - SQL文内で値として使用されるパラメータ
+   - 例: `WHERE id = #{id}`, `SET name = #{name}`
+
+2. **`${paramArray}` - 配列パラメータ（配列の展開）**
+   - `IN (${paramArray})` → `IN (?, ?, ?)` (要素数に応じて展開)
+   - 配列をIN句などで展開する場合に使用
+   - 例: `WHERE id IN (${ids})`
+
+3. **`${paramName}` - 条件分岐用パラメータ（テンプレートエンジン用）**
+   - 条件分岐（if句など）で使用
+   - テンプレートエンジン（MyBatis、JinjaSQL等）の形式として出力
+   - 値のバインドには使用しない
+   - 例: `if: "${nameFilter}"`, `if: "${sortBy} == 'name'"`
 
 **注意事項:**
-- パラメータは必ずPreparedStatement形式でバインド
+- `#{paramName}`は必ずPreparedStatement形式でバインド
+- `${paramArray}`は配列を展開して複数の`?`に変換
+- `${paramName}`は条件分岐用で、値のバインドには使用しない
 - SQLインジェクション対策のため、文字列連結は禁止
 
 ## 15. エラーハンドリング
