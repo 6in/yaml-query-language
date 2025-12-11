@@ -1,0 +1,10 @@
+operation: update
+table: customers
+set:
+  status: "inactive"
+where:
+  - "id = 1"
+returning:
+  - id
+  - status
+

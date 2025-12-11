@@ -1,0 +1,7 @@
+operation: update
+table:
+  c: customers
+set:
+  name: "John Doe"
+where:
+  - "c.id = 1"

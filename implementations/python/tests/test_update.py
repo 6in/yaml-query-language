@@ -1,9 +1,14 @@
 """Tests for UPDATE statement parsing and generation."""
 
+from pathlib import Path
+
 import pytest
 
-from yql import parse, generate_sql, Dialect
+from yql import parse_file, generate_sql, Dialect
 from yql.ast import OperationType
+
+# Fixture directory
+FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
 class TestParseUpdate:
@@ -11,16 +16,7 @@ class TestParseUpdate:
     
     def test_parse_simple_update(self):
         """Test parsing simple UPDATE."""
-        yql = """
-operation: update
-table: customers
-set:
-  name: "John Doe"
-  status: "active"
-where:
-  - "id = 1"
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "update_simple.yql")
         
         assert result.operation == OperationType.UPDATE
         assert result.update_query is not None
@@ -30,34 +26,14 @@ where:
     
     def test_parse_update_with_alias(self):
         """Test parsing UPDATE with table alias."""
-        yql = """
-operation: update
-table:
-  c: customers
-set:
-  name: "John Doe"
-where:
-  - "c.id = 1"
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "update_with_alias.yql")
         
         assert result.update_query.table == "customers"
         assert result.update_query.alias == "c"
     
     def test_parse_update_with_returning(self):
         """Test parsing UPDATE with RETURNING."""
-        yql = """
-operation: update
-table: customers
-set:
-  status: "inactive"
-where:
-  - "id = 1"
-returning:
-  - id
-  - status
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "update_with_returning.yql")
         
         assert result.update_query.returning == ["id", "status"]
 
@@ -67,16 +43,7 @@ class TestGenerateUpdate:
     
     def test_generate_simple_update(self):
         """Test generating simple UPDATE."""
-        yql = """
-operation: update
-table: customers
-set:
-  name: "John Doe"
-  status: "active"
-where:
-  - "id = 1"
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "update_simple.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
         assert "UPDATE customers" in sql
@@ -87,18 +54,7 @@ where:
     
     def test_generate_update_with_returning(self):
         """Test generating UPDATE with RETURNING (PostgreSQL)."""
-        yql = """
-operation: update
-table: customers
-set:
-  status: "inactive"
-where:
-  - "id = 1"
-returning:
-  - id
-  - status
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "update_with_returning.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
         assert "RETURNING id, status" in sql

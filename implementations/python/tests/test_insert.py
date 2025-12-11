@@ -1,9 +1,14 @@
 """Tests for INSERT statement parsing and generation."""
 
+from pathlib import Path
+
 import pytest
 
-from yql import parse, generate_sql, Dialect
+from yql import parse_file, generate_sql, Dialect
 from yql.ast import OperationType
+
+# Fixture directory
+FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
 class TestParseInsert:
@@ -11,15 +16,7 @@ class TestParseInsert:
     
     def test_parse_simple_insert(self):
         """Test parsing simple INSERT."""
-        yql = """
-operation: insert
-table: customers
-values:
-  id: 1
-  name: "John Doe"
-  email: "john@example.com"
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "insert_simple.yql")
         
         assert result.operation == OperationType.INSERT
         assert result.insert_query is not None
@@ -29,32 +26,14 @@ values:
     
     def test_parse_insert_multiple_rows(self):
         """Test parsing INSERT with multiple rows."""
-        yql = """
-operation: insert
-table: customers
-values:
-  - id: 1
-    name: "John Doe"
-  - id: 2
-    name: "Jane Smith"
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "insert_multiple_rows.yql")
         
         assert result.operation == OperationType.INSERT
         assert len(result.insert_query.values) == 2
     
     def test_parse_insert_with_returning(self):
         """Test parsing INSERT with RETURNING."""
-        yql = """
-operation: insert
-table: customers
-values:
-  name: "John Doe"
-returning:
-  - id
-  - created_at
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "insert_with_returning.yql")
         
         assert result.insert_query.returning == ["id", "created_at"]
 
@@ -64,15 +43,7 @@ class TestGenerateInsert:
     
     def test_generate_simple_insert(self):
         """Test generating simple INSERT."""
-        yql = """
-operation: insert
-table: customers
-values:
-  id: 1
-  name: "John Doe"
-  email: "john@example.com"
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "insert_simple.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
         assert "INSERT INTO customers" in sql
@@ -81,16 +52,7 @@ values:
     
     def test_generate_insert_multiple_rows(self):
         """Test generating INSERT with multiple rows."""
-        yql = """
-operation: insert
-table: customers
-values:
-  - id: 1
-    name: "John"
-  - id: 2
-    name: "Jane"
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "insert_multiple_rows.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
         assert "INSERT INTO customers" in sql
@@ -98,16 +60,7 @@ values:
     
     def test_generate_insert_with_returning(self):
         """Test generating INSERT with RETURNING (PostgreSQL)."""
-        yql = """
-operation: insert
-table: customers
-values:
-  name: "John Doe"
-returning:
-  - id
-  - created_at
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "insert_with_returning.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
         assert "RETURNING id, created_at" in sql

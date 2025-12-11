@@ -1,0 +1,8 @@
+operation: delete
+table: customers
+where:
+  - "id = 1"
+returning:
+  - id
+  - name
+
