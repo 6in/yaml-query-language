@@ -7,8 +7,8 @@ import pytest
 from yql import parse_file, generate_sql, Dialect
 from yql.ast import OperationType
 
-# Fixture directory
-FIXTURES_DIR = Path(__file__).parent / "fixtures"
+# Fixture directory (shared across implementations)
+FIXTURES_DIR = Path(__file__).parent.parent.parent / "tests" / "fixtures"
 
 
 class TestParseDelete:
