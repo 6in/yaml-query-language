@@ -1,8 +1,13 @@
 """Tests for MySQL SQL Generator."""
 
+from pathlib import Path
+
 import pytest
 
-from yql import parse, generate_sql, Dialect
+from yql import parse_file, generate_sql, Dialect
+
+# Fixture directory
+FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
 class TestMySQLGenerateBasic:
@@ -10,15 +15,7 @@ class TestMySQLGenerateBasic:
     
     def test_generate_simple_select(self):
         """Test generating simple SELECT for MySQL."""
-        yql = """
-query:
-  select:
-    - id: c.id
-    - name: c.name
-  from:
-    c: customers
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "simple_select.yql")
         sql = generate_sql(result, Dialect.MYSQL)
         
         assert "SELECT" in sql
@@ -32,31 +29,14 @@ class TestMySQLGenerateLimitOffset:
     
     def test_generate_limit(self):
         """Test generating LIMIT for MySQL."""
-        yql = """
-query:
-  select:
-    - id: c.id
-  from:
-    c: customers
-  limit: 10
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "select_with_limit.yql")
         sql = generate_sql(result, Dialect.MYSQL)
         
         assert "LIMIT 10" in sql
     
     def test_generate_limit_offset(self):
         """Test generating LIMIT and OFFSET for MySQL."""
-        yql = """
-query:
-  select:
-    - id: c.id
-  from:
-    c: customers
-  limit: 10
-  offset: 20
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "select_with_limit_offset.yql")
         sql = generate_sql(result, Dialect.MYSQL)
         
         assert "LIMIT 10" in sql
@@ -68,20 +48,7 @@ class TestMySQLGenerateJoin:
     
     def test_generate_inner_join(self):
         """Test generating INNER JOIN for MySQL."""
-        yql = """
-query:
-  select:
-    - customer_id: c.id
-    - order_id: o.id
-  from:
-    c: customers
-  joins:
-    - type: INNER
-      alias: o
-      table: orders
-      on: "c.id = o.customer_id"
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "select_with_join.yql")
         sql = generate_sql(result, Dialect.MYSQL)
         
         assert "INNER JOIN orders o ON c.id = o.customer_id" in sql

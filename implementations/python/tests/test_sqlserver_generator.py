@@ -1,8 +1,13 @@
 """Tests for SQL Server SQL Generator."""
 
+from pathlib import Path
+
 import pytest
 
-from yql import parse, generate_sql, Dialect
+from yql import parse_file, generate_sql, Dialect
+
+# Fixture directory
+FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
 class TestSQLServerGenerateBasic:
@@ -10,15 +15,7 @@ class TestSQLServerGenerateBasic:
     
     def test_generate_simple_select(self):
         """Test generating simple SELECT for SQL Server."""
-        yql = """
-query:
-  select:
-    - id: c.id
-    - name: c.name
-  from:
-    c: customers
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "simple_select.yql")
         sql = generate_sql(result, Dialect.SQLSERVER)
         
         assert "SELECT" in sql
@@ -32,15 +29,7 @@ class TestSQLServerGenerateTop:
     
     def test_generate_top(self):
         """Test generating TOP for SQL Server (LIMIT without OFFSET)."""
-        yql = """
-query:
-  select:
-    - id: c.id
-  from:
-    c: customers
-  limit: 10
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "select_with_limit.yql")
         sql = generate_sql(result, Dialect.SQLSERVER)
         
         assert "SELECT TOP 10" in sql
@@ -52,19 +41,7 @@ class TestSQLServerGenerateOffsetFetch:
     
     def test_generate_offset_fetch(self):
         """Test generating OFFSET-FETCH for SQL Server."""
-        yql = """
-query:
-  select:
-    - id: c.id
-  from:
-    c: customers
-  order_by:
-    - field: c.id
-      direction: ASC
-  limit: 10
-  offset: 20
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "select_with_order_by.yql")
         sql = generate_sql(result, Dialect.SQLSERVER)
         
         assert "OFFSET 20 ROWS" in sql
@@ -73,16 +50,7 @@ query:
     
     def test_generate_offset_fetch_requires_order_by(self):
         """Test that OFFSET-FETCH adds ORDER BY if not specified."""
-        yql = """
-query:
-  select:
-    - id: c.id
-  from:
-    c: customers
-  limit: 10
-  offset: 20
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "select_with_limit_offset.yql")
         sql = generate_sql(result, Dialect.SQLSERVER)
         
         # Should have ORDER BY (SELECT NULL) for SQL Server
@@ -95,20 +63,7 @@ class TestSQLServerGeneratePagination:
     
     def test_generate_pagination(self):
         """Test generating pagination for SQL Server."""
-        yql = """
-query:
-  pagination:
-    page: 2
-    per_page: 20
-  select:
-    - id: c.id
-  from:
-    c: customers
-  order_by:
-    - field: c.id
-      direction: ASC
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "select_with_pagination_literal.yql")
         sql = generate_sql(result, Dialect.SQLSERVER)
         
         # page=2, per_page=20 -> OFFSET (2-1)*20=20 ROWS FETCH NEXT 20 ROWS ONLY
@@ -121,20 +76,7 @@ class TestSQLServerGenerateJoin:
     
     def test_generate_inner_join(self):
         """Test generating INNER JOIN for SQL Server."""
-        yql = """
-query:
-  select:
-    - customer_id: c.id
-    - order_id: o.id
-  from:
-    c: customers
-  joins:
-    - type: INNER
-      alias: o
-      table: orders
-      on: "c.id = o.customer_id"
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "select_with_join.yql")
         sql = generate_sql(result, Dialect.SQLSERVER)
         
         assert "INNER JOIN orders o ON c.id = o.customer_id" in sql

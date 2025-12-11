@@ -1,0 +1,9 @@
+operation: upsert
+table: test
+values:
+  id: 1
+  name: "John"
+on_duplicate_key:
+  update:
+    name: "VALUES(name)"
+

@@ -1,0 +1,7 @@
+query:
+  select:
+    - id: c.id
+  from:
+    c: customers
+  limit: 10
+

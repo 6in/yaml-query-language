@@ -1,9 +1,13 @@
 """Tests for Oracle SQL Generator."""
 
+from pathlib import Path
+
 import pytest
 
-from yql import parse, generate_sql, Dialect
-from yql.ast import SelectQuery, Column, FromClause, OrderByClause, SortDirection
+from yql import parse, parse_file, generate_sql, Dialect
+
+# Fixture directory
+FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
 class TestOracleBasicSelect:
@@ -71,31 +75,14 @@ class TestOracleLimitOffset:
     
     def test_limit_only_with_rownum(self):
         """Test LIMIT only (uses ROWNUM)."""
-        yql = """
-query:
-  select:
-    - id: c.id
-  from:
-    c: customers
-  limit: 10
-"""
-        query = parse(yql)
+        query = parse_file(FIXTURES_DIR / "select_with_limit.yql")
         sql = generate_sql(query, Dialect.ORACLE)
         
         assert "ROWNUM <= 10" in sql
     
     def test_limit_with_offset_requires_order_by(self):
         """Test LIMIT with OFFSET requires ORDER BY."""
-        yql = """
-query:
-  select:
-    - id: c.id
-  from:
-    c: customers
-  limit: 10
-  offset: 20
-"""
-        query = parse(yql)
+        query = parse_file(FIXTURES_DIR / "select_with_limit_offset.yql")
         
         # Should raise error without ORDER BY
         with pytest.raises(ValueError, match="ORDER BY"):
@@ -103,20 +90,7 @@ query:
     
     def test_limit_with_offset_with_order_by(self):
         """Test LIMIT with OFFSET and ORDER BY (uses ROW_NUMBER())."""
-        yql = """
-query:
-  select:
-    - id: c.id
-    - name: c.name
-  from:
-    c: customers
-  order_by:
-    - field: c.id
-      direction: ASC
-  limit: 10
-  offset: 20
-"""
-        query = parse(yql)
+        query = parse_file(FIXTURES_DIR / "select_with_order_by.yql")
         sql = generate_sql(query, Dialect.ORACLE)
         
         assert "ROW_NUMBER() OVER" in sql
@@ -148,21 +122,7 @@ query:
     
     def test_pagination_with_order_by(self):
         """Test pagination with ORDER BY."""
-        yql = """
-query:
-  select:
-    - id: c.id
-    - name: c.name
-  from:
-    c: customers
-  order_by:
-    - field: c.id
-      direction: DESC
-  pagination:
-    page: "#{page:1}"
-    per_page: "#{per_page:20}"
-"""
-        query = parse(yql)
+        query = parse_file(FIXTURES_DIR / "select_with_pagination.yql")
         sql = generate_sql(query, Dialect.ORACLE)
         
         assert "ROW_NUMBER() OVER" in sql

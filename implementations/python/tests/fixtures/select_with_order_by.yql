@@ -1,0 +1,11 @@
+query:
+  select:
+    - id: c.id
+  from:
+    c: customers
+  order_by:
+    - field: c.id
+      direction: ASC
+  limit: 10
+  offset: 20
+
