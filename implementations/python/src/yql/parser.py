@@ -12,12 +12,17 @@ from .ast import (
     InsertQuery,
     JoinClause,
     JoinType,
+    OnConflictClause,
+    OnDuplicateKeyClause,
     OperationType,
     OrderByClause,
     Pagination,
     SelectQuery,
     SortDirection,
     UpdateQuery,
+    UpsertQuery,
+    WhenMatchedClause,
+    WhenNotMatchedClause,
     WithClause,
     YQLQuery,
 )
@@ -75,7 +80,9 @@ def _parse_yql(data: dict[str, Any]) -> YQLQuery:
     operation_str = data.get("operation", "").lower()
     
     # Check for DML operations
-    if operation_str == "insert" or "values" in data:
+    if operation_str == "upsert" or "on_conflict" in data or "on_duplicate_key" in data or ("using" in data and "match_on" in data):
+        return _parse_upsert_yql(data)
+    elif operation_str == "insert" or "values" in data:
         return _parse_insert_yql(data)
     elif operation_str == "update" or ("set" in data and "select" not in data):
         return _parse_update_yql(data)
@@ -95,6 +102,108 @@ def _parse_yql(data: dict[str, Any]) -> YQLQuery:
     return YQLQuery(
         operation=OperationType.SELECT,
         select_query=query,
+        raw=data,
+    )
+
+
+def _parse_upsert_yql(data: dict[str, Any]) -> YQLQuery:
+    """Parse UPSERT YQL."""
+    table = data.get("table", "")
+    if not table:
+        raise ParseError("UPSERT must have 'table'")
+    
+    # Parse table alias if present (for SQL Server/Oracle MERGE)
+    # Format: "alias: table_name" (per spec: table: target: table_name)
+    # When parsed as YAML string: "target: table_name"
+    alias = None
+    if ":" in table:
+        parts = table.split(":", 1)
+        if len(parts) == 2:
+            # Per spec: "alias: table_name" format
+            alias = parts[0].strip()
+            table = parts[1].strip()
+    
+    columns = data.get("columns", [])
+    values_data = data.get("values", [])
+    returning = data.get("returning", [])
+    
+    # Parse values
+    values = []
+    if isinstance(values_data, list):
+        for item in values_data:
+            if isinstance(item, dict):
+                values.append(item)
+            else:
+                raise ParseError(f"Invalid values format: {item}")
+    elif isinstance(values_data, dict):
+        values = [values_data]
+    
+    # Parse from_query (INSERT ... SELECT)
+    from_query = None
+    if "from_query" in data:
+        from_query = _parse_select_query(data["from_query"])
+    
+    # Parse PostgreSQL: on_conflict
+    on_conflict = None
+    if "on_conflict" in data:
+        conflict_data = data["on_conflict"]
+        on_conflict = OnConflictClause(
+            target=conflict_data.get("target"),
+            unique_constraint=conflict_data.get("unique_constraint"),
+            action=conflict_data.get("action", "update"),
+            update=conflict_data.get("update", {}),
+            where=conflict_data.get("where"),
+        )
+    
+    # Parse MySQL: on_duplicate_key
+    on_duplicate_key = None
+    if "on_duplicate_key" in data:
+        duplicate_data = data["on_duplicate_key"]
+        on_duplicate_key = OnDuplicateKeyClause(
+            update=duplicate_data.get("update", {}),
+        )
+    
+    # Parse SQL Server/Oracle: using, match_on, when_matched, when_not_matched
+    using = None
+    if "using" in data:
+        using = _parse_select_query(data["using"])
+    
+    match_on = data.get("match_on", [])
+    
+    when_matched = None
+    if "when_matched" in data:
+        matched_data = data["when_matched"]
+        when_matched = WhenMatchedClause(
+            update=matched_data.get("update", {}),
+            where=matched_data.get("where"),
+            delete=matched_data.get("delete", False),
+        )
+    
+    when_not_matched = None
+    if "when_not_matched" in data:
+        not_matched_data = data["when_not_matched"]
+        when_not_matched = WhenNotMatchedClause(
+            insert=not_matched_data.get("insert", {}),
+        )
+    
+    upsert_query = UpsertQuery(
+        table=table,
+        alias=alias,
+        columns=columns,
+        values=values,
+        from_query=from_query,
+        on_conflict=on_conflict,
+        on_duplicate_key=on_duplicate_key,
+        using=using,
+        match_on=match_on,
+        when_matched=when_matched,
+        when_not_matched=when_not_matched,
+        returning=returning if isinstance(returning, list) else [returning],
+    )
+    
+    return YQLQuery(
+        operation=OperationType.UPSERT,
+        upsert_query=upsert_query,
         raw=data,
     )
 

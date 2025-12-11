@@ -7,6 +7,7 @@ from .base import BaseGenerator
 from .postgresql import PostgreSQLGenerator
 from .mysql import MySQLGenerator
 from .sqlserver import SQLServerGenerator
+from .oracle import OracleGenerator
 
 
 class Dialect(Enum):
@@ -21,6 +22,7 @@ _GENERATORS: dict[Dialect, type[BaseGenerator]] = {
     Dialect.POSTGRESQL: PostgreSQLGenerator,
     Dialect.MYSQL: MySQLGenerator,
     Dialect.SQLSERVER: SQLServerGenerator,
+    Dialect.ORACLE: OracleGenerator,
 }
 
 
@@ -45,5 +47,5 @@ def generate_sql(query: YQLQuery, dialect: Dialect = Dialect.POSTGRESQL) -> str:
     return generator.generate(query)
 
 
-__all__ = ["Dialect", "generate_sql", "BaseGenerator", "PostgreSQLGenerator", "MySQLGenerator", "SQLServerGenerator"]
+__all__ = ["Dialect", "generate_sql", "BaseGenerator", "PostgreSQLGenerator", "MySQLGenerator", "SQLServerGenerator", "OracleGenerator"]
 

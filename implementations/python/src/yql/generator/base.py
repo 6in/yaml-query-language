@@ -12,6 +12,7 @@ from ..ast import (
     OrderByClause,
     SelectQuery,
     UpdateQuery,
+    UpsertQuery,
     WithClause,
     YQLQuery,
 )
@@ -48,6 +49,10 @@ class BaseGenerator(ABC):
             if yql.delete_query is None:
                 raise ValueError("DELETE query is empty")
             return self._generate_delete(yql.delete_query)
+        elif yql.operation == OperationType.UPSERT:
+            if yql.upsert_query is None:
+                raise ValueError("UPSERT query is empty")
+            return self._generate_upsert(yql.upsert_query)
         else:
             raise ValueError(f"Unsupported operation: {yql.operation}")
     
@@ -295,3 +300,10 @@ class BaseGenerator(ABC):
         
         return "\n".join(parts)
 
+
+    # ==================== UPSERT ====================
+    
+    @abstractmethod
+    def _generate_upsert(self, query: UpsertQuery) -> str:
+        """Generate UPSERT statement (dialect-specific)."""
+        pass
