@@ -9,7 +9,7 @@
 - PostgreSQL
 - MySQL
 - SQL Server (MSSQL)
-- Oracle (将来対応)
+- Oracle
 
 ### 1.2 変換の基本方針
 
@@ -36,13 +36,13 @@ select:
 
 #### 変換ルール
 
-| YQL | PostgreSQL | MySQL | SQL Server |
-|-----|-----------|-------|------------|
-| `alias_name: column_name` | `column_name AS alias_name` | `column_name AS alias_name` | `column_name AS alias_name` |
-| `alias_name: table_alias.column` | `table_alias.column AS alias_name` | `table_alias.column AS alias_name` | `table_alias.column AS alias_name` |
-| `alias_name: "*"` | `* AS alias_name` | `* AS alias_name` | `* AS alias_name` |
-| `alias_name: "table_alias.*"` | `table_alias.* AS alias_name` | `table_alias.* AS alias_name` | `table_alias.* AS alias_name` |
-| `alias_name: "expression"` | `expression AS alias_name` | `expression AS alias_name` | `expression AS alias_name` |
+| YQL | PostgreSQL | MySQL | SQL Server | Oracle |
+|-----|-----------|-------|------------|--------|
+| `alias_name: column_name` | `column_name AS alias_name` | `column_name AS alias_name` | `column_name AS alias_name` | `column_name AS alias_name` |
+| `alias_name: table_alias.column` | `table_alias.column AS alias_name` | `table_alias.column AS alias_name` | `table_alias.column AS alias_name` | `table_alias.column AS alias_name` |
+| `alias_name: "*"` | `* AS alias_name` | `* AS alias_name` | `* AS alias_name` | `* AS alias_name` |
+| `alias_name: "table_alias.*"` | `table_alias.* AS alias_name` | `table_alias.* AS alias_name` | `table_alias.* AS alias_name` | `table_alias.* AS alias_name` |
+| `alias_name: "expression"` | `expression AS alias_name` | `expression AS alias_name` | `expression AS alias_name` | `expression AS alias_name` |
 
 **生成例:**
 ```sql
@@ -109,27 +109,27 @@ select:
 #### 変換ルール
 
 **エイリアス付き式の変換:**
-| YQL | PostgreSQL | MySQL | SQL Server |
-|-----|-----------|-------|------------|
-| `alias: "expression"` | `expression AS alias` | `expression AS alias` | `expression AS alias` |
-| `full_name: "CONCAT(a, b)"` | `CONCAT(a, b) AS full_name` | `CONCAT(a, b) AS full_name` | `CONCAT(a, b) AS full_name` |
-| `total: "column1 + column2"` | `column1 + column2 AS total` | `column1 + column2 AS total` | `column1 + column2 AS total` |
+| YQL | PostgreSQL | MySQL | SQL Server | Oracle |
+|-----|-----------|-------|------------|--------|
+| `alias: "expression"` | `expression AS alias` | `expression AS alias` | `expression AS alias` | `expression AS alias` |
+| `full_name: "CONCAT(a, b)"` | `CONCAT(a, b) AS full_name` | `CONCAT(a, b) AS full_name` | `CONCAT(a, b) AS full_name` | `CONCAT(a, b) AS full_name` |
+| `total: "column1 + column2"` | `column1 + column2 AS total` | `column1 + column2 AS total` | `column1 + column2 AS total` | `column1 + column2 AS total` |
 
 **算術演算子:**
 - `+`, `-`, `*`, `/`, `%` は全DB共通
 
 **文字列結合:**
-| YQL | PostgreSQL | MySQL | SQL Server |
-|-----|-----------|-------|------------|
-| `CONCAT(a, b)` | `CONCAT(a, b)` | `CONCAT(a, b)` | `CONCAT(a, b)` |
-| `a \|\| b` | `a \|\| b` | `CONCAT(a, b)` | `a + b` |
+| YQL | PostgreSQL | MySQL | SQL Server | Oracle |
+|-----|-----------|-------|------------|--------|
+| `CONCAT(a, b)` | `CONCAT(a, b)` | `CONCAT(a, b)` | `CONCAT(a, b)` | `CONCAT(a, b)` |
+| `a \|\| b` | `a \|\| b` | `CONCAT(a, b)` | `a + b` | `a \|\| b` |
 
 **型キャスト:**
-| YQL | PostgreSQL | MySQL | SQL Server |
-|-----|-----------|-------|------------|
-| `column::text` | `column::text` | `CAST(column AS CHAR)` | `CAST(column AS VARCHAR)` |
-| `column::integer` | `column::integer` | `CAST(column AS SIGNED)` | `CAST(column AS INT)` |
-| `column::decimal` | `column::decimal` | `CAST(column AS DECIMAL)` | `CAST(column AS DECIMAL)` |
+| YQL | PostgreSQL | MySQL | SQL Server | Oracle |
+|-----|-----------|-------|------------|--------|
+| `column::text` | `column::text` | `CAST(column AS CHAR)` | `CAST(column AS VARCHAR)` | `CAST(column AS VARCHAR2)` |
+| `column::integer` | `column::integer` | `CAST(column AS SIGNED)` | `CAST(column AS INT)` | `CAST(column AS NUMBER)` |
+| `column::decimal` | `column::decimal` | `CAST(column AS DECIMAL)` | `CAST(column AS DECIMAL)` | `CAST(column AS NUMBER)` |
 
 **注意事項:**
 - **エイリアスは必須です**（パーサーの実装を簡素化するため）
@@ -156,23 +156,23 @@ select:
 #### 変換ルール
 
 **エイリアス付き集計関数の変換:**
-| YQL | PostgreSQL | MySQL | SQL Server |
-|-----|-----------|-------|------------|
-| `alias: "COUNT(*)"` | `COUNT(*) AS alias` | `COUNT(*) AS alias` | `COUNT(*) AS alias` |
-| `alias: "SUM(column)"` | `SUM(column) AS alias` | `SUM(column) AS alias` | `SUM(column) AS alias` |
-| `order_count: "COUNT(order_id)"` | `COUNT(order_id) AS order_count` | `COUNT(order_id) AS order_count` | `COUNT(order_id) AS order_count` |
-| `total_amount: "SUM(amount)"` | `SUM(amount) AS total_amount` | `SUM(amount) AS total_amount` | `SUM(amount) AS total_amount` |
+| YQL | PostgreSQL | MySQL | SQL Server | Oracle |
+|-----|-----------|-------|------------|--------|
+| `alias: "COUNT(*)"` | `COUNT(*) AS alias` | `COUNT(*) AS alias` | `COUNT(*) AS alias` | `COUNT(*) AS alias` |
+| `alias: "SUM(column)"` | `SUM(column) AS alias` | `SUM(column) AS alias` | `SUM(column) AS alias` | `SUM(column) AS alias` |
+| `order_count: "COUNT(order_id)"` | `COUNT(order_id) AS order_count` | `COUNT(order_id) AS order_count` | `COUNT(order_id) AS order_count` | `COUNT(order_id) AS order_count` |
+| `total_amount: "SUM(amount)"` | `SUM(amount) AS total_amount` | `SUM(amount) AS total_amount` | `SUM(amount) AS total_amount` | `SUM(amount) AS total_amount` |
 
 **集計関数の構文（全DB共通）:**
-| 関数 | PostgreSQL | MySQL | SQL Server |
-|------|-----------|-------|------------|
-| `COUNT(*)` | `COUNT(*)` | `COUNT(*)` | `COUNT(*)` |
-| `COUNT(column)` | `COUNT(column)` | `COUNT(column)` | `COUNT(column)` |
-| `COUNT(DISTINCT column)` | `COUNT(DISTINCT column)` | `COUNT(DISTINCT column)` | `COUNT(DISTINCT column)` |
-| `SUM(column)` | `SUM(column)` | `SUM(column)` | `SUM(column)` |
-| `AVG(column)` | `AVG(column)` | `AVG(column)` | `AVG(column)` |
-| `MIN(column)` | `MIN(column)` | `MIN(column)` | `MIN(column)` |
-| `MAX(column)` | `MAX(column)` | `MAX(column)` | `MAX(column)` |
+| 関数 | PostgreSQL | MySQL | SQL Server | Oracle |
+|------|-----------|-------|------------|--------|
+| `COUNT(*)` | `COUNT(*)` | `COUNT(*)` | `COUNT(*)` | `COUNT(*)` |
+| `COUNT(column)` | `COUNT(column)` | `COUNT(column)` | `COUNT(column)` | `COUNT(column)` |
+| `COUNT(DISTINCT column)` | `COUNT(DISTINCT column)` | `COUNT(DISTINCT column)` | `COUNT(DISTINCT column)` | `COUNT(DISTINCT column)` |
+| `SUM(column)` | `SUM(column)` | `SUM(column)` | `SUM(column)` | `SUM(column)` |
+| `AVG(column)` | `AVG(column)` | `AVG(column)` | `AVG(column)` | `AVG(column)` |
+| `MIN(column)` | `MIN(column)` | `MIN(column)` | `MIN(column)` | `MIN(column)` |
+| `MAX(column)` | `MAX(column)` | `MAX(column)` | `MAX(column)` | `MAX(column)` |
 
 **注意事項:**
 - 集計関数を使用する場合はGROUP BY句が必須（集計対象カラム以外）
@@ -224,10 +224,10 @@ from: alias: "schema.table_name"   # スキーマ付き（エイリアス必須�
 
 #### 変換ルール
 
-| YQL | PostgreSQL | MySQL | SQL Server |
-|-----|-----------|-------|------------|
-| `alias: table_name` | `table_name alias` | `table_name alias` | `table_name alias` |
-| `alias: "schema.table"` | `schema.table alias` | `schema.table alias` | `schema.table alias` |
+| YQL | PostgreSQL | MySQL | SQL Server | Oracle |
+|-----|-----------|-------|------------|--------|
+| `alias: table_name` | `table_name alias` | `table_name alias` | `table_name alias` | `table_name alias` |
+| `alias: "schema.table"` | `schema.table alias` | `schema.table alias` | `schema.table alias` | `schema.table alias` |
 
 **生成例:**
 ```sql
@@ -277,12 +277,12 @@ joins:
 #### 変換ルール
 
 | YQL JOINタイプ | PostgreSQL | MySQL | SQL Server |
-|---------------|-----------|-------|------------|
-| `INNER` | `INNER JOIN` | `INNER JOIN` | `INNER JOIN` |
-| `LEFT` | `LEFT JOIN` | `LEFT JOIN` | `LEFT JOIN` |
-| `RIGHT` | `RIGHT JOIN` | `RIGHT JOIN` | `RIGHT JOIN` |
-| `FULL` | `FULL OUTER JOIN` | `FULL OUTER JOIN` | `FULL OUTER JOIN` |
-| `CROSS` | `CROSS JOIN` | `CROSS JOIN` | `CROSS JOIN` |
+|---------------|-----------|-------|------------|--------|
+| `INNER` | `INNER JOIN` | `INNER JOIN` | `INNER JOIN` | `INNER JOIN` |
+| `LEFT` | `LEFT JOIN` | `LEFT JOIN` | `LEFT JOIN` | `LEFT JOIN` |
+| `RIGHT` | `RIGHT JOIN` | `RIGHT JOIN` | `RIGHT JOIN` | `RIGHT JOIN` |
+| `FULL` | `FULL OUTER JOIN` | `FULL OUTER JOIN` | `FULL OUTER JOIN` | `FULL OUTER JOIN` |
+| `CROSS` | `CROSS JOIN` | `CROSS JOIN` | `CROSS JOIN` | `CROSS JOIN` |
 
 **生成例:**
 
@@ -730,13 +730,14 @@ offset: 20
 
 #### 変換ルール
 
-| YQL | PostgreSQL | MySQL | SQL Server |
-|-----|-----------|-------|------------|
-| `limit: 10, offset: 20` | `LIMIT 10 OFFSET 20` | `LIMIT 20, 10` | `OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY` |
+| YQL | PostgreSQL | MySQL | SQL Server | Oracle |
+|-----|-----------|-------|------------|--------|
+| `limit: 10, offset: 20` | `LIMIT 10 OFFSET 20` | `LIMIT 20, 10` | `OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY` | `SELECT * FROM (SELECT ..., ROW_NUMBER() OVER (ORDER BY ...) AS rn FROM ...) WHERE rn > 20 AND rn <= 30` |
 
 **注意事項:**
 - SQL ServerではORDER BY句が必須
-- Oracleでは`ROWNUM`を使用（将来対応）
+- Oracleでは`offset`がある場合は`ROW_NUMBER() OVER()`を使用（ORDER BY句が必須）
+- Oracleで`offset: 0`の場合は`ROWNUM <= limit`を使用可能
 
 ### 10.2 パラメータによるLIMIT/OFFSET
 
@@ -763,9 +764,18 @@ LIMIT #{offset}, #{perPage}
 OFFSET #{offset} ROWS FETCH NEXT #{perPage} ROWS ONLY
 ```
 
+**Oracle:**
+```sql
+SELECT * FROM (
+  SELECT ..., ROW_NUMBER() OVER (ORDER BY ...) AS rn FROM ...
+) WHERE rn > #{offset} AND rn <= #{offset + perPage}
+```
+
 **注意事項:**
 - 計算式はコンパイル時に評価される
 - パラメータは`#{paramName}`形式でバインド
+- Oracleでは`offset`がある場合は`ROW_NUMBER() OVER()`を使用（ORDER BY句が必須）
+- Oracleで`offset: 0`の場合は`WHERE ROWNUM <= #{perPage}`を使用可能
 
 ### 10.3 pagination構文（ページング自動化）
 
@@ -816,8 +826,16 @@ LIMIT #{(page - 1) * per_page}, #{per_page}
 OFFSET #{(page - 1) * per_page} ROWS FETCH NEXT #{per_page} ROWS ONLY
 ```
 
+**Oracle:**
+```sql
+SELECT * FROM (
+  SELECT ..., ROW_NUMBER() OVER (ORDER BY ...) AS rn FROM ...
+) WHERE rn > #{(page - 1) * per_page} AND rn <= #{page * per_page}
+```
+
 **注意事項:**
 - SQL Serverでは`ORDER BY`が必須です。`pagination`が定義されている場合、`order_by`が存在しない場合はエラーを発生させます
+- Oracleでは`ORDER BY`が必須です。`pagination`が定義されている場合、`order_by`が存在しない場合はエラーを発生させます
 - 計算式（`offset = (page - 1) * per_page`）は、テンプレートエンジンで評価されます
 - パラメータが渡されない場合、デフォルト値を使用します
 

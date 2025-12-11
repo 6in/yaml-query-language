@@ -9,7 +9,7 @@ YQLは同一の記述から複数のSQL方言を生成します。
 | PostgreSQL | ✅ | ✅ | ✅ | ✅ | ✅ |
 | MySQL | ✅ | ✅ | ✅ | ✅ | ✅ |
 | SQL Server | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Oracle | 🚧 | 🚧 | 🚧 | 🚧 | 🚧 |
+| Oracle | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ## SQL方言の抽象化
 

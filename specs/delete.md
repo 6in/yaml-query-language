@@ -9,7 +9,7 @@
 - PostgreSQL
 - MySQL
 - SQL Server (MSSQL)
-- Oracle (将来対応)
+- Oracle
 
 ### 1.2 変換の基本方針
 
@@ -50,7 +50,7 @@ WHERE condition1
 --   - "status = 'deleted'"
 --   - "deleted_at < DATE('now', '-1 year')"
 
--- PostgreSQL/MySQL/SQL Server:
+-- PostgreSQL/MySQL/SQL Server/Oracle:
 DELETE FROM customers
 WHERE status = 'deleted'
   AND deleted_at < DATE('now', '-1 year')

@@ -9,7 +9,7 @@
 - PostgreSQL
 - MySQL
 - SQL Server (MSSQL)
-- Oracle (将来対応)
+- Oracle
 
 ### 1.2 変換の基本方針
 
@@ -51,7 +51,7 @@ VALUES (value1, value2, expression)
 --   email: "john@example.com"
 --   status: "active"
 
--- PostgreSQL/MySQL/SQL Server:
+-- PostgreSQL/MySQL/SQL Server/Oracle:
 INSERT INTO customers (name, email, status)
 VALUES ('John Doe', 'john@example.com', 'active')
 ```
@@ -76,7 +76,7 @@ values:
 
 #### 変換ルール
 
-**PostgreSQL/MySQL:**
+**PostgreSQL/MySQL/Oracle:**
 ```sql
 INSERT INTO table_name (column1, column2)
 VALUES (value1, value2), (value3, value4)
@@ -91,7 +91,7 @@ VALUES (value3, value4);
 ```
 
 **注意事項:**
-- PostgreSQL/MySQLは複数行を1つのINSERT文で処理可能
+- PostgreSQL/MySQL/Oracleは複数行を1つのINSERT文で処理可能
 - SQL Serverは複数のINSERT文に分割（またはUNION ALLを使用）
 - バッチサイズは実装時に調整可能
 
@@ -137,7 +137,7 @@ WHERE condition
 --   where:
 --     - "c.status = 'inactive'"
 
--- PostgreSQL/MySQL/SQL Server:
+-- PostgreSQL/MySQL/SQL Server/Oracle:
 INSERT INTO customer_archive (customer_id, name, archived_at)
 SELECT c.customer_id AS customer_id, c.name AS name, CURRENT_TIMESTAMP AS archived_at
 FROM customers c
@@ -188,7 +188,8 @@ RETURNING id, name, created_at
 
 **注意事項:**
 - PostgreSQLのみサポート
-- MySQL、SQL Serverでは使用不可（別途SELECT文が必要）
+- MySQL、SQL Server、Oracleでは使用不可（別途SELECT文が必要）
+- Oracleでは`RETURNING INTO`を使用可能だが、ストアドプロシージャ内での使用が一般的なため、YQLではサポートしない
 
 ## 5. パラメータバインディング
 

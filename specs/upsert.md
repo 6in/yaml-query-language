@@ -9,7 +9,7 @@
 - PostgreSQL
 - MySQL
 - SQL Server (MSSQL)
-- Oracle (将来対応)
+- Oracle
 
 ### 1.2 変換の基本方針
 
@@ -203,11 +203,11 @@ when_not_matched:
 
 #### 変換ルール
 
-**SQL Server:**
+**SQL Server/Oracle:**
 ```sql
 MERGE table_name AS target
-USING (SELECT 1 AS id, 'John Doe' AS name, 'john@example.com' AS email) AS source
-ON target.id = source.id
+USING (SELECT 1 AS id, 'John Doe' AS name, 'john@example.com' AS email FROM DUAL) AS source
+ON (target.id = source.id)
 WHEN MATCHED THEN
   UPDATE SET
     name = source.name,
@@ -219,9 +219,11 @@ WHEN NOT MATCHED THEN
 ```
 
 **注意事項:**
-- SQL ServerではMERGE文を使用
+- SQL Server/OracleではMERGE文を使用
+- Oracleでは`USING`句内のSELECT文に`FROM DUAL`が必要（定数値の場合）
 - `using`句内のSELECT文は、`specs/select.md`の仕様に従う
 - `match_on`は結合条件を指定
+- Oracleでは`ON`句を括弧で囲む必要がある
 
 ### 4.2 条件付きUPDATE/DELETE
 
@@ -247,11 +249,11 @@ when_not_matched:
 
 #### 変換ルール
 
-**SQL Server:**
+**SQL Server/Oracle:**
 ```sql
 MERGE table_name AS target
 USING source_table AS source
-ON target.id = source.id
+ON (target.id = source.id)
 WHEN MATCHED AND target.version < source.version THEN
   UPDATE SET name = source.name
 WHEN NOT MATCHED THEN
@@ -262,6 +264,7 @@ WHEN NOT MATCHED THEN
 **注意事項:**
 - `when_matched`に`where`句で条件を指定可能
 - 条件が満たされない場合は更新しない
+- Oracleでは`ON`句を括弧で囲む必要がある
 
 ## 5. バッチUPSERT
 
@@ -312,6 +315,21 @@ ON DUPLICATE KEY UPDATE
 MERGE table_name AS target
 USING (VALUES (1, 'John Doe', 'john@example.com'), (2, 'Jane Smith', 'jane@example.com')) AS source (id, name, email)
 ON target.id = source.id
+WHEN MATCHED THEN
+  UPDATE SET name = source.name, email = source.email
+WHEN NOT MATCHED THEN
+  INSERT (id, name, email) VALUES (source.id, source.name, source.email);
+```
+
+**Oracle:**
+```sql
+MERGE table_name AS target
+USING (
+  SELECT 1 AS id, 'John Doe' AS name, 'john@example.com' AS email FROM DUAL
+  UNION ALL
+  SELECT 2 AS id, 'Jane Smith' AS name, 'jane@example.com' AS email FROM DUAL
+) AS source
+ON (target.id = source.id)
 WHEN MATCHED THEN
   UPDATE SET name = source.name, email = source.email
 WHEN NOT MATCHED THEN
@@ -407,7 +425,8 @@ RETURNING id, name, updated_at
 
 **注意事項:**
 - PostgreSQLのみサポート
-- MySQL、SQL Serverでは使用不可（別途SELECT文が必要）
+- MySQL、SQL Server、Oracleでは使用不可（別途SELECT文が必要）
+- Oracleでは`RETURNING INTO`を使用可能だが、ストアドプロシージャ内での使用が一般的なため、YQLではサポートしない
 
 ## 8. import機能の利用
 

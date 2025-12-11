@@ -9,7 +9,7 @@
 - PostgreSQL
 - MySQL
 - SQL Server (MSSQL)
-- Oracle (将来対応)
+- Oracle
 
 ### 1.2 変換の基本方針
 
@@ -60,7 +60,7 @@ WHERE condition1
 -- where:
 --   - "last_login_date < DATE('now', '-6 months')"
 
--- PostgreSQL/MySQL/SQL Server:
+-- PostgreSQL/MySQL/SQL Server/Oracle:
 UPDATE customers
 SET
   status = 'inactive',
@@ -302,7 +302,8 @@ RETURNING id, name, status, updated_at
 
 **注意事項:**
 - PostgreSQLのみサポート
-- MySQL、SQL Serverでは使用不可（別途SELECT文が必要）
+- MySQL、SQL Server、Oracleでは使用不可（別途SELECT文が必要）
+- Oracleでは`RETURNING INTO`を使用可能だが、ストアドプロシージャ内での使用が一般的なため、YQLではサポートしない
 
 ## 7. import機能の利用
 
