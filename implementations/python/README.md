@@ -76,7 +76,7 @@ WHERE c.status = 'active'
 | PostgreSQL | ✅ 対応 |
 | MySQL | ✅ 対応 |
 | SQL Server | ✅ 対応 |
-| Oracle | 🚧 未実装 |
+| Oracle | ✅ 対応 |
 
 ### SELECT機能
 
@@ -100,7 +100,7 @@ WHERE c.status = 'active'
 | INSERT | ✅ 対応 |
 | UPDATE | ✅ 対応 |
 | DELETE | ✅ 対応 |
-| UPSERT | 🚧 未実装 |
+| UPSERT | ✅ 対応 |
 | RETURNING句 | ✅ 対応 (PostgreSQL) |
 
 ### その他
