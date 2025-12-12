@@ -18,10 +18,9 @@ class TestMySQLGenerateBasic:
         result = parse_file(FIXTURES_DIR / "simple_select" / "before.yql")
         sql = generate_sql(result, Dialect.MYSQL)
         
-        assert "SELECT" in sql
-        assert "c.id AS id" in sql
-        assert "c.name AS name" in sql
-        assert "FROM customers c" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "simple_select" / "mysql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 
 
 class TestMySQLGenerateLimitOffset:
@@ -32,15 +31,18 @@ class TestMySQLGenerateLimitOffset:
         result = parse_file(FIXTURES_DIR / "select_with_limit" / "before.yql")
         sql = generate_sql(result, Dialect.MYSQL)
         
-        assert "LIMIT 10" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_limit" / "mysql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
     
     def test_generate_limit_offset(self):
         """Test generating LIMIT and OFFSET for MySQL."""
         result = parse_file(FIXTURES_DIR / "select_with_limit_offset" / "before.yql")
         sql = generate_sql(result, Dialect.MYSQL)
         
-        assert "LIMIT 10" in sql
-        assert "OFFSET 20" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_limit_offset" / "mysql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 
 
 class TestMySQLGenerateJoin:
@@ -51,5 +53,7 @@ class TestMySQLGenerateJoin:
         result = parse_file(FIXTURES_DIR / "select_with_join" / "before.yql")
         sql = generate_sql(result, Dialect.MYSQL)
         
-        assert "INNER JOIN orders o ON c.id = o.customer_id" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_join" / "mysql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 

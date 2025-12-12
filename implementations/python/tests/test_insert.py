@@ -46,22 +46,25 @@ class TestGenerateInsert:
         result = parse_file(FIXTURES_DIR / "insert_simple" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "INSERT INTO customers" in sql
-        assert "(id, name, email)" in sql
-        assert "VALUES" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "insert_simple" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
     
     def test_generate_insert_multiple_rows(self):
         """Test generating INSERT with multiple rows."""
         result = parse_file(FIXTURES_DIR / "insert_multiple_rows" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "INSERT INTO customers" in sql
-        assert "VALUES" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "insert_multiple_rows" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
     
     def test_generate_insert_with_returning(self):
         """Test generating INSERT with RETURNING (PostgreSQL)."""
         result = parse_file(FIXTURES_DIR / "insert_with_returning" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "RETURNING id, created_at" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "insert_with_returning" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 

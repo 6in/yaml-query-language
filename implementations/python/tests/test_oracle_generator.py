@@ -78,7 +78,9 @@ class TestOracleLimitOffset:
         query = parse_file(FIXTURES_DIR / "select_with_limit" / "before.yql")
         sql = generate_sql(query, Dialect.ORACLE)
         
-        assert "ROWNUM <= 10" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_limit" / "oracle.sql").read_text().strip()
+        assert sql.strip() == expected_sql
     
     def test_limit_with_offset_requires_order_by(self):
         """Test LIMIT with OFFSET requires ORDER BY."""
@@ -93,10 +95,9 @@ class TestOracleLimitOffset:
         query = parse_file(FIXTURES_DIR / "select_with_order_by" / "before.yql")
         sql = generate_sql(query, Dialect.ORACLE)
         
-        assert "ROW_NUMBER() OVER" in sql
-        assert "ORDER BY c.id ASC" in sql
-        assert "rn > 20" in sql
-        assert "rn <= (20 + 10)" in sql  # offset + limit
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_order_by" / "oracle.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 
 
 class TestOraclePagination:
@@ -125,9 +126,9 @@ query:
         query = parse_file(FIXTURES_DIR / "select_with_pagination" / "before.yql")
         sql = generate_sql(query, Dialect.ORACLE)
         
-        assert "ROW_NUMBER() OVER" in sql
-        assert "ORDER BY c.id DESC" in sql
-        assert "((#{page:1} - 1) * #{per_page:20})" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_pagination" / "oracle.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 
 
 class TestOracleInsert:
@@ -170,6 +171,7 @@ class TestOracleUpdate:
     
     def test_simple_update(self):
         """Test simple UPDATE statement."""
+        from yql import parse
         yql = """
 operation: update
 table: customers
@@ -182,6 +184,7 @@ where:
         query = parse(yql)
         sql = generate_sql(query, Dialect.ORACLE)
         
+        # Note: This test doesn't use fixture file, so we keep the assertion
         assert "UPDATE customers" in sql
         assert "SET" in sql
         assert "name = John Doe" in sql or "name = 'John Doe'" in sql
@@ -193,6 +196,7 @@ class TestOracleDelete:
     
     def test_simple_delete(self):
         """Test simple DELETE statement."""
+        from yql import parse
         yql = """
 operation: delete
 table: customers
@@ -202,6 +206,7 @@ where:
         query = parse(yql)
         sql = generate_sql(query, Dialect.ORACLE)
         
+        # Note: This test doesn't use fixture file, so we keep the assertion
         assert "DELETE FROM customers" in sql
         assert "WHERE status = 'deleted'" in sql
 

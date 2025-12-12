@@ -52,39 +52,34 @@ class TestGenerateUpsert:
         result = parse_file(FIXTURES_DIR / "upsert_postgresql" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "INSERT INTO test" in sql
-        assert "ON CONFLICT (id)" in sql
-        assert "DO UPDATE SET" in sql
-        assert "name = EXCLUDED.name" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "upsert_postgresql" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
     
     def test_generate_upsert_mysql(self):
         """Test generating MySQL UPSERT (INSERT ... ON DUPLICATE KEY UPDATE)."""
         result = parse_file(FIXTURES_DIR / "upsert_mysql" / "before.yql")
         sql = generate_sql(result, Dialect.MYSQL)
         
-        assert "INSERT INTO test" in sql
-        assert "ON DUPLICATE KEY UPDATE" in sql
-        assert "name = VALUES(name)" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "upsert_mysql" / "mysql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
     
     def test_generate_upsert_sqlserver(self):
         """Test generating SQL Server UPSERT (MERGE)."""
         result = parse_file(FIXTURES_DIR / "upsert_merge" / "before.yql")
         sql = generate_sql(result, Dialect.SQLSERVER)
         
-        assert "MERGE test AS target" in sql
-        assert "USING" in sql
-        assert "ON target.id = source.id" in sql
-        assert "WHEN MATCHED THEN" in sql
-        assert "WHEN NOT MATCHED THEN" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "upsert_merge" / "sqlserver.sql").read_text().strip()
+        assert sql.strip() == expected_sql
     
     def test_generate_upsert_oracle(self):
         """Test generating Oracle UPSERT (MERGE)."""
         result = parse_file(FIXTURES_DIR / "upsert_merge" / "before.yql")
         sql = generate_sql(result, Dialect.ORACLE)
         
-        assert "MERGE test AS target" in sql
-        assert "USING" in sql
-        assert "ON (target.id = source.id)" in sql  # Oracle requires parentheses
-        assert "WHEN MATCHED THEN" in sql
-        assert "WHEN NOT MATCHED THEN" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "upsert_merge" / "oracle.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 

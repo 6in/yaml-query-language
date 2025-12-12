@@ -46,16 +46,16 @@ class TestGenerateUpdate:
         result = parse_file(FIXTURES_DIR / "update_simple" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "UPDATE customers" in sql
-        assert "SET" in sql
-        assert "name = John Doe" in sql
-        assert "status = active" in sql
-        assert "WHERE id = 1" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "update_simple" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
     
     def test_generate_update_with_returning(self):
         """Test generating UPDATE with RETURNING (PostgreSQL)."""
         result = parse_file(FIXTURES_DIR / "update_with_returning" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "RETURNING id, status" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "update_with_returning" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 

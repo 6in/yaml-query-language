@@ -18,10 +18,9 @@ class TestSQLServerGenerateBasic:
         result = parse_file(FIXTURES_DIR / "simple_select" / "before.yql")
         sql = generate_sql(result, Dialect.SQLSERVER)
         
-        assert "SELECT" in sql
-        assert "c.id AS id" in sql
-        assert "c.name AS name" in sql
-        assert "FROM customers c" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "simple_select" / "sqlserver.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 
 
 class TestSQLServerGenerateTop:
@@ -32,8 +31,9 @@ class TestSQLServerGenerateTop:
         result = parse_file(FIXTURES_DIR / "select_with_limit" / "before.yql")
         sql = generate_sql(result, Dialect.SQLSERVER)
         
-        assert "SELECT TOP 10" in sql
-        assert "OFFSET" not in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_limit" / "sqlserver.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 
 
 class TestSQLServerGenerateOffsetFetch:
@@ -44,18 +44,18 @@ class TestSQLServerGenerateOffsetFetch:
         result = parse_file(FIXTURES_DIR / "select_with_order_by" / "before.yql")
         sql = generate_sql(result, Dialect.SQLSERVER)
         
-        assert "OFFSET 20 ROWS" in sql
-        assert "FETCH NEXT 10 ROWS ONLY" in sql
-        assert "TOP" not in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_order_by" / "sqlserver.sql").read_text().strip()
+        assert sql.strip() == expected_sql
     
     def test_generate_offset_fetch_requires_order_by(self):
         """Test that OFFSET-FETCH adds ORDER BY if not specified."""
         result = parse_file(FIXTURES_DIR / "select_with_limit_offset" / "before.yql")
         sql = generate_sql(result, Dialect.SQLSERVER)
         
-        # Should have ORDER BY (SELECT NULL) for SQL Server
-        assert "ORDER BY" in sql
-        assert "OFFSET 20 ROWS" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_limit_offset" / "sqlserver.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 
 
 class TestSQLServerGeneratePagination:
@@ -66,9 +66,9 @@ class TestSQLServerGeneratePagination:
         result = parse_file(FIXTURES_DIR / "select_with_pagination_literal" / "before.yql")
         sql = generate_sql(result, Dialect.SQLSERVER)
         
-        # page=2, per_page=20 -> OFFSET (2-1)*20=20 ROWS FETCH NEXT 20 ROWS ONLY
-        assert "OFFSET 20 ROWS" in sql
-        assert "FETCH NEXT 20 ROWS ONLY" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_pagination_literal" / "sqlserver.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 
 
 class TestSQLServerGenerateJoin:
@@ -79,5 +79,7 @@ class TestSQLServerGenerateJoin:
         result = parse_file(FIXTURES_DIR / "select_with_join" / "before.yql")
         sql = generate_sql(result, Dialect.SQLSERVER)
         
-        assert "INNER JOIN orders o ON c.id = o.customer_id" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_join" / "sqlserver.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 

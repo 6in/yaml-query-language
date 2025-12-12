@@ -18,10 +18,9 @@ class TestGenerateBasic:
         result = parse_file(FIXTURES_DIR / "simple_select" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "SELECT" in sql
-        assert "c.id AS id" in sql
-        assert "c.name AS name" in sql
-        assert "FROM customers c" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "simple_select" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
     
     def test_generate_with_where(self):
         """Test generating SELECT with WHERE."""
@@ -39,7 +38,9 @@ class TestGenerateJoin:
         result = parse_file(FIXTURES_DIR / "select_with_join" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "INNER JOIN orders o ON c.id = o.customer_id" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_join" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
     
     def test_generate_left_join(self):
         """Test generating LEFT JOIN."""
@@ -88,8 +89,9 @@ query:
         result = parse_file(FIXTURES_DIR / "select_with_group_by_having" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "GROUP BY o.customer_id" in sql
-        assert "HAVING COUNT(*) > 5" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_group_by_having" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 
 
 class TestGenerateOrderBy:
@@ -100,14 +102,18 @@ class TestGenerateOrderBy:
         result = parse_file(FIXTURES_DIR / "select_with_order_by_desc" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "ORDER BY c.created_at DESC" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_order_by_desc" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
     
     def test_generate_multiple_order_by(self):
         """Test generating multiple ORDER BY columns."""
         result = parse_file(FIXTURES_DIR / "select_with_multiple_order_by" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "ORDER BY c.status ASC, c.created_at DESC" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_multiple_order_by" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 
 
 class TestGenerateLimitOffset:
@@ -118,15 +124,18 @@ class TestGenerateLimitOffset:
         result = parse_file(FIXTURES_DIR / "select_with_limit" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "LIMIT 10" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_limit" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
     
     def test_generate_limit_offset(self):
         """Test generating LIMIT and OFFSET."""
         result = parse_file(FIXTURES_DIR / "select_with_limit_offset" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "LIMIT 10" in sql
-        assert "OFFSET 20" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_limit_offset" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 
 
 class TestGenerateWithClause:
@@ -137,9 +146,9 @@ class TestGenerateWithClause:
         result = parse_file(FIXTURES_DIR / "select_with_cte" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "WITH active_customers AS" in sql
-        assert "c.status = 'active'" in sql
-        assert "FROM active_customers ac" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_cte" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 
 
 class TestGenerateComplex:
@@ -150,16 +159,7 @@ class TestGenerateComplex:
         result = parse_file(FIXTURES_DIR / "select_complex" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        # Verify all parts are present
-        assert "SELECT" in sql
-        assert "c.id AS customer_id" in sql or "customer_id" in sql
-        assert "COUNT(o.id) AS order_count" in sql
-        assert "SUM(o.amount) AS total_amount" in sql
-        assert "FROM customers c" in sql
-        assert "LEFT JOIN orders o ON c.id = o.customer_id" in sql
-        assert "WHERE c.status = 'active'" in sql
-        assert "GROUP BY c.id, c.name" in sql
-        assert "HAVING COUNT(o.id) > 0" in sql
-        assert "ORDER BY total_amount DESC" in sql
-        assert "LIMIT 10" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_complex" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 

@@ -45,21 +45,25 @@ class TestGenerateDelete:
         result = parse_file(FIXTURES_DIR / "delete_simple" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "DELETE FROM customers" in sql
-        assert "WHERE id = 1" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "delete_simple" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
     
     def test_generate_delete_with_alias(self):
         """Test generating DELETE with alias."""
         result = parse_file(FIXTURES_DIR / "delete_with_alias" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "DELETE FROM customers c" in sql
-        assert "WHERE c.status = 'deleted'" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "delete_with_alias" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
     
     def test_generate_delete_with_returning(self):
         """Test generating DELETE with RETURNING (PostgreSQL)."""
         result = parse_file(FIXTURES_DIR / "delete_with_returning" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "RETURNING id, name" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "delete_with_returning" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 
