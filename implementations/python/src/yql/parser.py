@@ -33,11 +33,12 @@ class ParseError(Exception):
     pass
 
 
-def parse(yql_content: str) -> YQLQuery:
+def parse(yql_content: str, base_path: Path | None = None) -> YQLQuery:
     """Parse YQL string into AST.
     
     Args:
         yql_content: YQL content as string (YAML format)
+        base_path: Base path for resolving relative imports (optional)
         
     Returns:
         YQLQuery AST
@@ -53,7 +54,7 @@ def parse(yql_content: str) -> YQLQuery:
     if not isinstance(data, dict):
         raise ParseError("YQL must be a YAML mapping")
     
-    return _parse_yql(data)
+    return _parse_yql(data, base_path)
 
 
 def parse_file(path: str | Path) -> YQLQuery:
@@ -71,23 +72,38 @@ def parse_file(path: str | Path) -> YQLQuery:
     """
     path = Path(path)
     content = path.read_text(encoding="utf-8")
-    return parse(content)
+    base_path = path.parent
+    return parse(content, base_path)
 
 
-def _parse_yql(data: dict[str, Any]) -> YQLQuery:
-    """Parse top-level YQL structure."""
+def _parse_yql(data: dict[str, Any], base_path: Path | None = None) -> YQLQuery:
+    """Parse top-level YQL structure.
+    
+    Args:
+        data: Parsed YAML data
+        base_path: Base path for resolving relative imports (optional)
+    """
+    # Handle imports first
+    imports = data.get("imports", [])
+    imported_definitions = {}
+    if imports:
+        if base_path is None:
+            # If no base_path provided, try to use current working directory
+            base_path = Path.cwd()
+        imported_definitions = _load_imports(imports, base_path)
+    
     # Determine operation type
     operation_str = data.get("operation", "").lower()
     
     # Check for DML operations
     if operation_str == "upsert" or "on_conflict" in data or "on_duplicate_key" in data or ("using" in data and "match_on" in data):
-        return _parse_upsert_yql(data)
+        return _parse_upsert_yql(data, imported_definitions)
     elif operation_str == "insert" or "values" in data:
-        return _parse_insert_yql(data)
+        return _parse_insert_yql(data, imported_definitions)
     elif operation_str == "update" or ("set" in data and "select" not in data):
-        return _parse_update_yql(data)
+        return _parse_update_yql(data, imported_definitions)
     elif operation_str == "delete" or (operation_str == "delete" and "table" in data):
-        return _parse_delete_yql(data)
+        return _parse_delete_yql(data, imported_definitions)
     
     # Default to SELECT
     if "query" in data:
@@ -97,7 +113,7 @@ def _parse_yql(data: dict[str, Any]) -> YQLQuery:
     else:
         raise ParseError("YQL must have 'query', 'select', or DML operation")
     
-    query = _parse_select_query(query_data)
+    query = _parse_select_query(query_data, imported_definitions)
     
     return YQLQuery(
         operation=OperationType.SELECT,
@@ -106,7 +122,7 @@ def _parse_yql(data: dict[str, Any]) -> YQLQuery:
     )
 
 
-def _parse_upsert_yql(data: dict[str, Any]) -> YQLQuery:
+def _parse_upsert_yql(data: dict[str, Any], imported_definitions: dict[str, Any] | None = None) -> YQLQuery:
     """Parse UPSERT YQL."""
     table = data.get("table", "")
     if not table:
@@ -208,7 +224,7 @@ def _parse_upsert_yql(data: dict[str, Any]) -> YQLQuery:
     )
 
 
-def _parse_insert_yql(data: dict[str, Any]) -> YQLQuery:
+def _parse_insert_yql(data: dict[str, Any], imported_definitions: dict[str, Any] | None = None) -> YQLQuery:
     """Parse INSERT YQL."""
     table = data.get("table", "")
     if not table:
@@ -249,7 +265,7 @@ def _parse_insert_yql(data: dict[str, Any]) -> YQLQuery:
     )
 
 
-def _parse_update_yql(data: dict[str, Any]) -> YQLQuery:
+def _parse_update_yql(data: dict[str, Any], imported_definitions: dict[str, Any] | None = None) -> YQLQuery:
     """Parse UPDATE YQL."""
     table_data = data.get("table", "")
     
@@ -290,7 +306,7 @@ def _parse_update_yql(data: dict[str, Any]) -> YQLQuery:
     )
 
 
-def _parse_delete_yql(data: dict[str, Any]) -> YQLQuery:
+def _parse_delete_yql(data: dict[str, Any], imported_definitions: dict[str, Any] | None = None) -> YQLQuery:
     """Parse DELETE YQL."""
     table_data = data.get("table", "")
     
@@ -329,13 +345,18 @@ def _parse_delete_yql(data: dict[str, Any]) -> YQLQuery:
     )
 
 
-def _parse_select_query(data: dict[str, Any]) -> SelectQuery:
-    """Parse SELECT query."""
+def _parse_select_query(data: dict[str, Any], imported_definitions: dict[str, Any] | None = None) -> SelectQuery:
+    """Parse SELECT query.
+    
+    Args:
+        data: SELECT query data
+        imported_definitions: Imported definitions dictionary (optional)
+    """
     query = SelectQuery()
     
     # Parse WITH clauses
     if "with_clauses" in data:
-        query.with_clauses = _parse_with_clauses(data["with_clauses"])
+        query.with_clauses = _parse_with_clauses(data["with_clauses"], imported_definitions)
     
     # Parse SELECT clause
     if "select" in data:
@@ -543,15 +564,99 @@ def _parse_order_by(data: list[Any]) -> list[OrderByClause]:
     return order_by
 
 
-def _parse_with_clauses(data: dict[str, Any]) -> list[WithClause]:
-    """Parse WITH clauses (CTEs)."""
+def _load_imports(imports: list[str], base_path: Path) -> dict[str, Any]:
+    """Load imported YQL files.
+    
+    Args:
+        imports: List of import paths (relative to base_path)
+        base_path: Base path for resolving relative imports
+        
+    Returns:
+        Dictionary mapping import names to their definitions
+    """
+    imported_definitions = {}
+    
+    for import_path in imports:
+        # Resolve import path
+        if import_path.startswith("/"):
+            # Absolute path
+            full_path = Path(import_path)
+        else:
+            # Relative path
+            full_path = base_path / import_path
+        
+        # Add .yql extension if not present
+        if not full_path.suffix:
+            full_path = full_path.with_suffix(".yql")
+        
+        if not full_path.exists():
+            raise ParseError(f"Import file not found: {full_path}")
+        
+        # Load and parse imported file
+        try:
+            content = full_path.read_text(encoding="utf-8")
+            imported_data = yaml.safe_load(content)
+            
+            if not isinstance(imported_data, dict):
+                raise ParseError(f"Imported file must be a YAML mapping: {full_path}")
+            
+            # Extract name from imported file
+            name = imported_data.get("name", full_path.stem)
+            imported_definitions[name] = imported_data
+            
+        except yaml.YAMLError as e:
+            raise ParseError(f"Failed to parse import file {full_path}: {e}") from e
+    
+    return imported_definitions
+
+
+def _apply_parameters(data: Any, provided_params: dict[str, Any], default_params: dict[str, Any] | None = None) -> Any:
+    """Apply parameters to YQL data structure.
+    
+    This is a placeholder for parameter substitution.
+    Full implementation would require recursive traversal and string replacement.
+    """
+    # TODO: Implement parameter substitution
+    # For now, just return the data as-is
+    return data
+
+
+def _parse_with_clauses(data: dict[str, Any], imported_definitions: dict[str, Any] | None = None) -> list[WithClause]:
+    """Parse WITH clauses (CTEs).
+    
+    Args:
+        data: WITH clauses data
+        imported_definitions: Imported definitions dictionary (optional)
+    """
+    if imported_definitions is None:
+        imported_definitions = {}
+    
     with_clauses = []
     
     for name, definition in data.items():
         if isinstance(definition, dict):
             if "using" in definition:
-                # Reference to imported definition - not implemented yet
-                raise ParseError("'using' import reference not yet implemented")
+                # Reference to imported definition
+                import_name = definition["using"]
+                if import_name not in imported_definitions:
+                    raise ParseError(f"Imported definition '{import_name}' not found. Available: {list(imported_definitions.keys())}")
+                
+                imported_def = imported_definitions[import_name]
+                if "select_definition" not in imported_def:
+                    raise ParseError(f"Imported definition '{import_name}' does not contain 'select_definition'")
+                
+                # Get parameters if provided
+                parameters = definition.get("parameters", {})
+                
+                # Parse the imported SELECT definition
+                select_def = imported_def["select_definition"]
+                
+                # Apply parameters if any
+                if parameters:
+                    select_def = _apply_parameters(select_def, parameters, imported_def.get("parameters", {}))
+                
+                query = _parse_select_query(select_def)
+                with_clauses.append(WithClause(name=name, query=query))
             else:
                 # Inline definition
                 query = _parse_select_query(definition)
