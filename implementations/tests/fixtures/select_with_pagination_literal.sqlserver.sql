@@ -1,0 +1,6 @@
+SELECT
+  c.id AS id
+FROM customers c
+ORDER BY c.id ASC
+OFFSET 20 ROWS
+FETCH NEXT 20 ROWS ONLY

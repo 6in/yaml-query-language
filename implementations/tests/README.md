@@ -19,13 +19,20 @@ implementations/tests/fixtures/
 
 ```python
 from pathlib import Path
-from yql import parse_file
+from yql import parse_file, generate_sql, Dialect
 
 # 共通フィクスチャディレクトリを参照
 FIXTURES_DIR = Path(__file__).parent.parent.parent / "tests" / "fixtures"
 
 # YQLファイルを読み込む
 query = parse_file(FIXTURES_DIR / "simple_select.yql")
+
+# SQLを生成
+sql = generate_sql(query, Dialect.POSTGRESQL)
+
+# 期待SQLファイルと比較
+expected_sql = (FIXTURES_DIR / "simple_select.postgresql.sql").read_text()
+assert sql.strip() == expected_sql.strip()
 ```
 
 ### Go実装（将来）
@@ -55,8 +62,14 @@ let yql_file = fixtures_dir.join("simple_select.yql");
 
 ## ファイル命名規則
 
+### YQLファイル
 - `{operation}_{description}.yql` 形式
 - 例: `select_simple.yql`, `insert_with_returning.yql`
+
+### 期待SQLファイル
+- `{yql_filename}.{dialect}.sql` 形式
+- 例: `simple_select.postgresql.sql`, `simple_select.mysql.sql`
+- 対応DB: `postgresql`, `mysql`, `sqlserver`, `oracle`
 
 ## 追加・変更時の注意
 
