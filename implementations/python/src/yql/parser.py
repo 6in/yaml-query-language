@@ -568,7 +568,7 @@ def _load_imports(imports: list[str], base_path: Path) -> dict[str, Any]:
     """Load imported YQL files.
     
     Args:
-        imports: List of import paths (relative to base_path)
+        imports: List of import paths (relative to fixtures directory)
         base_path: Base path for resolving relative imports
         
     Returns:
@@ -576,17 +576,30 @@ def _load_imports(imports: list[str], base_path: Path) -> dict[str, Any]:
     """
     imported_definitions = {}
     
+    # Find fixtures directory (parent of base_path if base_path is in a test fixture directory)
+    fixtures_dir = base_path.parent if base_path.name != "fixtures" else base_path
+    
     for import_path in imports:
         # Resolve import path
         if import_path.startswith("/"):
             # Absolute path
             full_path = Path(import_path)
         else:
-            # Relative path
-            full_path = base_path / import_path
+            # Relative path: try fixtures_dir first, then base_path
+            # Check if import_path is a directory name (e.g., "test_import_customer_summary")
+            candidate_path = fixtures_dir / import_path
+            if candidate_path.is_dir():
+                # If it's a directory, look for before.yql inside it
+                full_path = candidate_path / "before.yql"
+            else:
+                # Otherwise, treat it as a file path
+                full_path = candidate_path
+                if not full_path.exists():
+                    # Fallback to base_path
+                    full_path = base_path / import_path
         
-        # Add .yql extension if not present
-        if not full_path.suffix:
+        # Add .yql extension if not present and it's not already a directory with before.yql
+        if not full_path.suffix and not full_path.name.endswith(".yql"):
             full_path = full_path.with_suffix(".yql")
         
         if not full_path.exists():
@@ -613,12 +626,47 @@ def _load_imports(imports: list[str], base_path: Path) -> dict[str, Any]:
 def _apply_parameters(data: Any, provided_params: dict[str, Any], default_params: dict[str, Any] | None = None) -> Any:
     """Apply parameters to YQL data structure.
     
-    This is a placeholder for parameter substitution.
-    Full implementation would require recursive traversal and string replacement.
+    Replaces parameter placeholders like #{paramName} with provided values.
+    
+    Args:
+        data: YQL data structure (dict, list, str, etc.)
+        provided_params: Parameters provided by the user
+        default_params: Default parameters from the definition (optional)
+    
+    Returns:
+        Data structure with parameters applied
     """
-    # TODO: Implement parameter substitution
-    # For now, just return the data as-is
-    return data
+    if default_params is None:
+        default_params = {}
+    
+    # Merge default and provided parameters (provided takes precedence)
+    params = {**default_params, **provided_params}
+    
+    if isinstance(data, dict):
+        # Recursively apply to dictionary values
+        return {key: _apply_parameters(value, provided_params, default_params) for key, value in data.items()}
+    elif isinstance(data, list):
+        # Recursively apply to list items
+        return [_apply_parameters(item, provided_params, default_params) for item in data]
+    elif isinstance(data, str):
+        # Replace parameter placeholders in strings
+        result = data
+        for param_name, param_value in params.items():
+            # Replace #{paramName} with the value
+            placeholder = f"#{{{param_name}}}"
+            if placeholder in result:
+                # Format the value appropriately
+                if isinstance(param_value, str):
+                    # String literal - add quotes
+                    formatted_value = f"'{param_value}'"
+                else:
+                    # Number, bool, etc. - convert to string as-is
+                    formatted_value = str(param_value)
+                result = result.replace(placeholder, formatted_value)
+        return result
+    else:
+        # For other types (int, bool, etc.), return as-is
+        return data
 
 
 def _parse_with_clauses(data: dict[str, Any], imported_definitions: dict[str, Any] | None = None) -> list[WithClause]:
