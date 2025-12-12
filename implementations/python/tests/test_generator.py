@@ -15,7 +15,7 @@ class TestGenerateBasic:
     
     def test_generate_simple_select(self):
         """Test generating simple SELECT."""
-        result = parse_file(FIXTURES_DIR / "simple_select.yql")
+        result = parse_file(FIXTURES_DIR / "simple_select" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
         assert "SELECT" in sql
@@ -25,7 +25,7 @@ class TestGenerateBasic:
     
     def test_generate_with_where(self):
         """Test generating SELECT with WHERE."""
-        result = parse_file(FIXTURES_DIR / "select_with_where.yql")
+        result = parse_file(FIXTURES_DIR / "select_with_where" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
         assert "WHERE c.status = 'active'" in sql
@@ -36,7 +36,7 @@ class TestGenerateJoin:
     
     def test_generate_inner_join(self):
         """Test generating INNER JOIN."""
-        result = parse_file(FIXTURES_DIR / "select_with_join.yql")
+        result = parse_file(FIXTURES_DIR / "select_with_join" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
         assert "INNER JOIN orders o ON c.id = o.customer_id" in sql
@@ -85,7 +85,7 @@ query:
     
     def test_generate_group_by_having(self):
         """Test generating GROUP BY with HAVING."""
-        result = parse_file(FIXTURES_DIR / "select_with_group_by_having.yql")
+        result = parse_file(FIXTURES_DIR / "select_with_group_by_having" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
         assert "GROUP BY o.customer_id" in sql
@@ -97,14 +97,14 @@ class TestGenerateOrderBy:
     
     def test_generate_order_by(self):
         """Test generating ORDER BY."""
-        result = parse_file(FIXTURES_DIR / "select_with_order_by_desc.yql")
+        result = parse_file(FIXTURES_DIR / "select_with_order_by_desc" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
         assert "ORDER BY c.created_at DESC" in sql
     
     def test_generate_multiple_order_by(self):
         """Test generating multiple ORDER BY columns."""
-        result = parse_file(FIXTURES_DIR / "select_with_multiple_order_by.yql")
+        result = parse_file(FIXTURES_DIR / "select_with_multiple_order_by" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
         assert "ORDER BY c.status ASC, c.created_at DESC" in sql
@@ -115,14 +115,14 @@ class TestGenerateLimitOffset:
     
     def test_generate_limit(self):
         """Test generating LIMIT."""
-        result = parse_file(FIXTURES_DIR / "select_with_limit.yql")
+        result = parse_file(FIXTURES_DIR / "select_with_limit" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
         assert "LIMIT 10" in sql
     
     def test_generate_limit_offset(self):
         """Test generating LIMIT and OFFSET."""
-        result = parse_file(FIXTURES_DIR / "select_with_limit_offset.yql")
+        result = parse_file(FIXTURES_DIR / "select_with_limit_offset" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
         assert "LIMIT 10" in sql
@@ -134,7 +134,7 @@ class TestGenerateWithClause:
     
     def test_generate_single_cte(self):
         """Test generating single CTE."""
-        result = parse_file(FIXTURES_DIR / "select_with_cte.yql")
+        result = parse_file(FIXTURES_DIR / "select_with_cte" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
         assert "WITH active_customers AS" in sql
@@ -147,7 +147,7 @@ class TestGenerateComplex:
     
     def test_generate_complex_query(self):
         """Test generating complex query with multiple clauses."""
-        result = parse_file(FIXTURES_DIR / "select_complex.yql")
+        result = parse_file(FIXTURES_DIR / "select_complex" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
         # Verify all parts are present

@@ -75,14 +75,14 @@ class TestOracleLimitOffset:
     
     def test_limit_only_with_rownum(self):
         """Test LIMIT only (uses ROWNUM)."""
-        query = parse_file(FIXTURES_DIR / "select_with_limit.yql")
+        query = parse_file(FIXTURES_DIR / "select_with_limit" / "before.yql")
         sql = generate_sql(query, Dialect.ORACLE)
         
         assert "ROWNUM <= 10" in sql
     
     def test_limit_with_offset_requires_order_by(self):
         """Test LIMIT with OFFSET requires ORDER BY."""
-        query = parse_file(FIXTURES_DIR / "select_with_limit_offset.yql")
+        query = parse_file(FIXTURES_DIR / "select_with_limit_offset" / "before.yql")
         
         # Should raise error without ORDER BY
         with pytest.raises(ValueError, match="ORDER BY"):
@@ -90,7 +90,7 @@ class TestOracleLimitOffset:
     
     def test_limit_with_offset_with_order_by(self):
         """Test LIMIT with OFFSET and ORDER BY (uses ROW_NUMBER())."""
-        query = parse_file(FIXTURES_DIR / "select_with_order_by.yql")
+        query = parse_file(FIXTURES_DIR / "select_with_order_by" / "before.yql")
         sql = generate_sql(query, Dialect.ORACLE)
         
         assert "ROW_NUMBER() OVER" in sql
@@ -122,7 +122,7 @@ query:
     
     def test_pagination_with_order_by(self):
         """Test pagination with ORDER BY."""
-        query = parse_file(FIXTURES_DIR / "select_with_pagination.yql")
+        query = parse_file(FIXTURES_DIR / "select_with_pagination" / "before.yql")
         sql = generate_sql(query, Dialect.ORACLE)
         
         assert "ROW_NUMBER() OVER" in sql

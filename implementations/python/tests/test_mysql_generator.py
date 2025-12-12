@@ -15,7 +15,7 @@ class TestMySQLGenerateBasic:
     
     def test_generate_simple_select(self):
         """Test generating simple SELECT for MySQL."""
-        result = parse_file(FIXTURES_DIR / "simple_select.yql")
+        result = parse_file(FIXTURES_DIR / "simple_select" / "before.yql")
         sql = generate_sql(result, Dialect.MYSQL)
         
         assert "SELECT" in sql
@@ -29,14 +29,14 @@ class TestMySQLGenerateLimitOffset:
     
     def test_generate_limit(self):
         """Test generating LIMIT for MySQL."""
-        result = parse_file(FIXTURES_DIR / "select_with_limit.yql")
+        result = parse_file(FIXTURES_DIR / "select_with_limit" / "before.yql")
         sql = generate_sql(result, Dialect.MYSQL)
         
         assert "LIMIT 10" in sql
     
     def test_generate_limit_offset(self):
         """Test generating LIMIT and OFFSET for MySQL."""
-        result = parse_file(FIXTURES_DIR / "select_with_limit_offset.yql")
+        result = parse_file(FIXTURES_DIR / "select_with_limit_offset" / "before.yql")
         sql = generate_sql(result, Dialect.MYSQL)
         
         assert "LIMIT 10" in sql
@@ -48,7 +48,7 @@ class TestMySQLGenerateJoin:
     
     def test_generate_inner_join(self):
         """Test generating INNER JOIN for MySQL."""
-        result = parse_file(FIXTURES_DIR / "select_with_join.yql")
+        result = parse_file(FIXTURES_DIR / "select_with_join" / "before.yql")
         sql = generate_sql(result, Dialect.MYSQL)
         
         assert "INNER JOIN orders o ON c.id = o.customer_id" in sql

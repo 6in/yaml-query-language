@@ -16,7 +16,7 @@ class TestParseUpdate:
     
     def test_parse_simple_update(self):
         """Test parsing simple UPDATE."""
-        result = parse_file(FIXTURES_DIR / "update_simple.yql")
+        result = parse_file(FIXTURES_DIR / "update_simple" / "before.yql")
         
         assert result.operation == OperationType.UPDATE
         assert result.update_query is not None
@@ -26,14 +26,14 @@ class TestParseUpdate:
     
     def test_parse_update_with_alias(self):
         """Test parsing UPDATE with table alias."""
-        result = parse_file(FIXTURES_DIR / "update_with_alias.yql")
+        result = parse_file(FIXTURES_DIR / "update_with_alias" / "before.yql")
         
         assert result.update_query.table == "customers"
         assert result.update_query.alias == "c"
     
     def test_parse_update_with_returning(self):
         """Test parsing UPDATE with RETURNING."""
-        result = parse_file(FIXTURES_DIR / "update_with_returning.yql")
+        result = parse_file(FIXTURES_DIR / "update_with_returning" / "before.yql")
         
         assert result.update_query.returning == ["id", "status"]
 
@@ -43,7 +43,7 @@ class TestGenerateUpdate:
     
     def test_generate_simple_update(self):
         """Test generating simple UPDATE."""
-        result = parse_file(FIXTURES_DIR / "update_simple.yql")
+        result = parse_file(FIXTURES_DIR / "update_simple" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
         assert "UPDATE customers" in sql
@@ -54,7 +54,7 @@ class TestGenerateUpdate:
     
     def test_generate_update_with_returning(self):
         """Test generating UPDATE with RETURNING (PostgreSQL)."""
-        result = parse_file(FIXTURES_DIR / "update_with_returning.yql")
+        result = parse_file(FIXTURES_DIR / "update_with_returning" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
         assert "RETURNING id, status" in sql

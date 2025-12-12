@@ -16,7 +16,7 @@ class TestParseUpsert:
     
     def test_parse_upsert_postgresql(self):
         """Test parsing PostgreSQL UPSERT (ON CONFLICT)."""
-        result = parse_file(FIXTURES_DIR / "upsert_postgresql.yql")
+        result = parse_file(FIXTURES_DIR / "upsert_postgresql" / "before.yql")
         
         assert result.operation == OperationType.UPSERT
         assert result.upsert_query is not None
@@ -26,7 +26,7 @@ class TestParseUpsert:
     
     def test_parse_upsert_mysql(self):
         """Test parsing MySQL UPSERT (ON DUPLICATE KEY)."""
-        result = parse_file(FIXTURES_DIR / "upsert_mysql.yql")
+        result = parse_file(FIXTURES_DIR / "upsert_mysql" / "before.yql")
         
         assert result.operation == OperationType.UPSERT
         assert result.upsert_query.table == "test"
@@ -34,7 +34,7 @@ class TestParseUpsert:
     
     def test_parse_upsert_merge(self):
         """Test parsing SQL Server/Oracle UPSERT (MERGE)."""
-        result = parse_file(FIXTURES_DIR / "upsert_merge.yql")
+        result = parse_file(FIXTURES_DIR / "upsert_merge" / "before.yql")
         
         assert result.operation == OperationType.UPSERT
         assert result.upsert_query.table == "test"
@@ -49,7 +49,7 @@ class TestGenerateUpsert:
     
     def test_generate_upsert_postgresql(self):
         """Test generating PostgreSQL UPSERT (INSERT ... ON CONFLICT)."""
-        result = parse_file(FIXTURES_DIR / "upsert_postgresql.yql")
+        result = parse_file(FIXTURES_DIR / "upsert_postgresql" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
         assert "INSERT INTO test" in sql
@@ -59,7 +59,7 @@ class TestGenerateUpsert:
     
     def test_generate_upsert_mysql(self):
         """Test generating MySQL UPSERT (INSERT ... ON DUPLICATE KEY UPDATE)."""
-        result = parse_file(FIXTURES_DIR / "upsert_mysql.yql")
+        result = parse_file(FIXTURES_DIR / "upsert_mysql" / "before.yql")
         sql = generate_sql(result, Dialect.MYSQL)
         
         assert "INSERT INTO test" in sql
@@ -68,7 +68,7 @@ class TestGenerateUpsert:
     
     def test_generate_upsert_sqlserver(self):
         """Test generating SQL Server UPSERT (MERGE)."""
-        result = parse_file(FIXTURES_DIR / "upsert_merge.yql")
+        result = parse_file(FIXTURES_DIR / "upsert_merge" / "before.yql")
         sql = generate_sql(result, Dialect.SQLSERVER)
         
         assert "MERGE test AS target" in sql
@@ -79,7 +79,7 @@ class TestGenerateUpsert:
     
     def test_generate_upsert_oracle(self):
         """Test generating Oracle UPSERT (MERGE)."""
-        result = parse_file(FIXTURES_DIR / "upsert_merge.yql")
+        result = parse_file(FIXTURES_DIR / "upsert_merge" / "before.yql")
         sql = generate_sql(result, Dialect.ORACLE)
         
         assert "MERGE test AS target" in sql

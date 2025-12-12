@@ -6,11 +6,17 @@
 
 ```
 implementations/tests/fixtures/
-├── select_*.yql          # SELECT文のテストケース
-├── insert_*.yql           # INSERT文のテストケース
-├── update_*.yql           # UPDATE文のテストケース
-├── delete_*.yql           # DELETE文のテストケース
-└── upsert_*.yql           # UPSERT文のテストケース
+├── simple_select/
+│   ├── before.yql          # YQLファイル
+│   ├── postgresql.sql      # PostgreSQL期待SQL
+│   ├── mysql.sql           # MySQL期待SQL
+│   ├── sqlserver.sql       # SQL Server期待SQL
+│   └── oracle.sql          # Oracle期待SQL
+├── select_with_join/
+│   ├── before.yql
+│   ├── postgresql.sql
+│   └── ...
+└── ...
 ```
 
 ## 使用方法
@@ -25,13 +31,13 @@ from yql import parse_file, generate_sql, Dialect
 FIXTURES_DIR = Path(__file__).parent.parent.parent / "tests" / "fixtures"
 
 # YQLファイルを読み込む
-query = parse_file(FIXTURES_DIR / "simple_select.yql")
+query = parse_file(FIXTURES_DIR / "simple_select" / "before.yql")
 
 # SQLを生成
 sql = generate_sql(query, Dialect.POSTGRESQL)
 
 # 期待SQLファイルと比較
-expected_sql = (FIXTURES_DIR / "simple_select.postgresql.sql").read_text()
+expected_sql = (FIXTURES_DIR / "simple_select" / "postgresql.sql").read_text()
 assert sql.strip() == expected_sql.strip()
 ```
 
@@ -47,7 +53,8 @@ import (
 
 // 共通フィクスチャディレクトリを参照
 fixturesDir := filepath.Join("..", "..", "tests", "fixtures")
-yqlFile := filepath.Join(fixturesDir, "simple_select.yql")
+yqlFile := filepath.Join(fixturesDir, "simple_select", "before.yql")
+expectedSQL := filepath.Join(fixturesDir, "simple_select", "postgresql.sql")
 ```
 
 ### Rust実装（将来）
@@ -57,18 +64,21 @@ use std::path::PathBuf;
 
 // 共通フィクスチャディレクトリを参照
 let fixtures_dir = PathBuf::from("../../tests/fixtures");
-let yql_file = fixtures_dir.join("simple_select.yql");
+let yql_file = fixtures_dir.join("simple_select").join("before.yql");
+let expected_sql = fixtures_dir.join("simple_select").join("postgresql.sql");
 ```
 
 ## ファイル命名規則
 
-### YQLファイル
-- `{operation}_{description}.yql` 形式
-- 例: `select_simple.yql`, `insert_with_returning.yql`
+### フォルダ構造
+- 各テストケースはフォルダとして管理
+- フォルダ名: `{operation}_{description}` 形式
+- 例: `simple_select/`, `insert_with_returning/`
 
-### 期待SQLファイル
-- `{yql_filename}.{dialect}.sql` 形式
-- 例: `simple_select.postgresql.sql`, `simple_select.mysql.sql`
+### ファイル名
+- YQLファイル: `before.yql`（固定）
+- 期待SQLファイル: `{dialect}.sql`
+  - 例: `postgresql.sql`, `mysql.sql`, `sqlserver.sql`, `oracle.sql`
 - 対応DB: `postgresql`, `mysql`, `sqlserver`, `oracle`
 
 ## 追加・変更時の注意

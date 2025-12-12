@@ -16,7 +16,7 @@ class TestParseDelete:
     
     def test_parse_simple_delete(self):
         """Test parsing simple DELETE."""
-        result = parse_file(FIXTURES_DIR / "delete_simple.yql")
+        result = parse_file(FIXTURES_DIR / "delete_simple" / "before.yql")
         
         assert result.operation == OperationType.DELETE
         assert result.delete_query is not None
@@ -25,14 +25,14 @@ class TestParseDelete:
     
     def test_parse_delete_with_alias(self):
         """Test parsing DELETE with table alias."""
-        result = parse_file(FIXTURES_DIR / "delete_with_alias.yql")
+        result = parse_file(FIXTURES_DIR / "delete_with_alias" / "before.yql")
         
         assert result.delete_query.table == "customers"
         assert result.delete_query.alias == "c"
     
     def test_parse_delete_with_returning(self):
         """Test parsing DELETE with RETURNING."""
-        result = parse_file(FIXTURES_DIR / "delete_with_returning.yql")
+        result = parse_file(FIXTURES_DIR / "delete_with_returning" / "before.yql")
         
         assert result.delete_query.returning == ["id", "name"]
 
@@ -42,7 +42,7 @@ class TestGenerateDelete:
     
     def test_generate_simple_delete(self):
         """Test generating simple DELETE."""
-        result = parse_file(FIXTURES_DIR / "delete_simple.yql")
+        result = parse_file(FIXTURES_DIR / "delete_simple" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
         assert "DELETE FROM customers" in sql
@@ -50,7 +50,7 @@ class TestGenerateDelete:
     
     def test_generate_delete_with_alias(self):
         """Test generating DELETE with alias."""
-        result = parse_file(FIXTURES_DIR / "delete_with_alias.yql")
+        result = parse_file(FIXTURES_DIR / "delete_with_alias" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
         assert "DELETE FROM customers c" in sql
@@ -58,7 +58,7 @@ class TestGenerateDelete:
     
     def test_generate_delete_with_returning(self):
         """Test generating DELETE with RETURNING (PostgreSQL)."""
-        result = parse_file(FIXTURES_DIR / "delete_with_returning.yql")
+        result = parse_file(FIXTURES_DIR / "delete_with_returning" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
         assert "RETURNING id, name" in sql
