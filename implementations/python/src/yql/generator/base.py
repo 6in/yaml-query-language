@@ -220,18 +220,21 @@ class BaseGenerator(ABC):
         return "\n".join(parts)
     
     def _format_value(self, value) -> str:
-        """Format a value for SQL."""
+        """Format a value for SQL.
+        
+        Parameters, macros, and expressions are passed through as-is
+        to allow template engines to handle them.
+        """
         if value is None:
             return "NULL"
         elif isinstance(value, str):
-            if value.startswith("#{") or value.startswith("${"):
-                # Parameter placeholder
-                return "?"
-            elif value.startswith("@"):
-                # Macro reference - pass through
+            # Pass through parameters, macros, and expressions as-is
+            # This allows template engines (Jinja2, etc.) to handle them
+            if value.startswith("#{") or value.startswith("${") or value.startswith("@{"):
+                # Parameter, array parameter, or macro - pass through
                 return value
             else:
-                # String literal or expression
+                # String literal or expression - pass through
                 return value
         elif isinstance(value, bool):
             return "TRUE" if value else "FALSE"
