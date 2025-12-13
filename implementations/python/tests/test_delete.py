@@ -1,9 +1,14 @@
 """Tests for DELETE statement parsing and generation."""
 
+from pathlib import Path
+
 import pytest
 
-from yql import parse, generate_sql, Dialect
+from yql import parse_file, generate_sql, Dialect
 from yql.ast import OperationType
+
+# Fixture directory (shared across implementations)
+FIXTURES_DIR = Path(__file__).parent.parent.parent / "tests" / "fixtures"
 
 
 class TestParseDelete:
@@ -11,13 +16,7 @@ class TestParseDelete:
     
     def test_parse_simple_delete(self):
         """Test parsing simple DELETE."""
-        yql = """
-operation: delete
-table: customers
-where:
-  - "id = 1"
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "delete_simple" / "before.yql")
         
         assert result.operation == OperationType.DELETE
         assert result.delete_query is not None
@@ -26,30 +25,14 @@ where:
     
     def test_parse_delete_with_alias(self):
         """Test parsing DELETE with table alias."""
-        yql = """
-operation: delete
-table:
-  c: customers
-where:
-  - "c.id = 1"
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "delete_with_alias" / "before.yql")
         
         assert result.delete_query.table == "customers"
         assert result.delete_query.alias == "c"
     
     def test_parse_delete_with_returning(self):
         """Test parsing DELETE with RETURNING."""
-        yql = """
-operation: delete
-table: customers
-where:
-  - "id = 1"
-returning:
-  - id
-  - name
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "delete_with_returning" / "before.yql")
         
         assert result.delete_query.returning == ["id", "name"]
 
@@ -59,46 +42,28 @@ class TestGenerateDelete:
     
     def test_generate_simple_delete(self):
         """Test generating simple DELETE."""
-        yql = """
-operation: delete
-table: customers
-where:
-  - "id = 1"
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "delete_simple" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "DELETE FROM customers" in sql
-        assert "WHERE id = 1" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "delete_simple" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
     
     def test_generate_delete_with_alias(self):
         """Test generating DELETE with alias."""
-        yql = """
-operation: delete
-table:
-  c: customers
-where:
-  - "c.status = 'deleted'"
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "delete_with_alias" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "DELETE FROM customers c" in sql
-        assert "WHERE c.status = 'deleted'" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "delete_with_alias" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
     
     def test_generate_delete_with_returning(self):
         """Test generating DELETE with RETURNING (PostgreSQL)."""
-        yql = """
-operation: delete
-table: customers
-where:
-  - "id = 1"
-returning:
-  - id
-  - name
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "delete_with_returning" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "RETURNING id, name" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "delete_with_returning" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 

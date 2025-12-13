@@ -122,6 +122,60 @@ class DeleteQuery:
 
 
 @dataclass
+class OnConflictClause:
+    """PostgreSQL ON CONFLICT clause."""
+    target: list[str] | None = None  # Column names
+    unique_constraint: str | None = None  # Constraint name
+    action: str = "update"  # "update" or "ignore"
+    update: dict[str, Any] = field(default_factory=dict)  # Update values
+    where: str | None = None  # Conditional update
+
+
+@dataclass
+class OnDuplicateKeyClause:
+    """MySQL ON DUPLICATE KEY UPDATE clause."""
+    update: dict[str, Any] = field(default_factory=dict)  # Update values
+
+
+@dataclass
+class WhenMatchedClause:
+    """SQL Server/Oracle WHEN MATCHED clause."""
+    update: dict[str, Any] = field(default_factory=dict)  # Update values
+    where: str | None = None  # Conditional update
+    delete: bool = False  # DELETE action
+
+
+@dataclass
+class WhenNotMatchedClause:
+    """SQL Server/Oracle WHEN NOT MATCHED clause."""
+    insert: dict[str, Any] = field(default_factory=dict)  # Insert values
+
+
+@dataclass
+class UpsertQuery:
+    """UPSERT query AST."""
+    table: str
+    alias: str | None = None
+    columns: list[str] = field(default_factory=list)
+    values: list[dict[str, Any]] = field(default_factory=list)  # List of row dicts
+    from_query: SelectQuery | None = None  # INSERT ... SELECT
+    
+    # PostgreSQL: on_conflict
+    on_conflict: OnConflictClause | None = None
+    
+    # MySQL: on_duplicate_key
+    on_duplicate_key: OnDuplicateKeyClause | None = None
+    
+    # SQL Server/Oracle: using, match_on, when_matched, when_not_matched
+    using: SelectQuery | None = None  # USING clause (SELECT query)
+    match_on: list[str] = field(default_factory=list)  # Match columns
+    when_matched: WhenMatchedClause | None = None
+    when_not_matched: WhenNotMatchedClause | None = None
+    
+    returning: list[str] = field(default_factory=list)
+
+
+@dataclass
 class YQLQuery:
     """Top-level YQL query container."""
     operation: OperationType = OperationType.SELECT
@@ -129,6 +183,7 @@ class YQLQuery:
     insert_query: InsertQuery | None = None
     update_query: UpdateQuery | None = None
     delete_query: DeleteQuery | None = None
+    upsert_query: UpsertQuery | None = None
     raw: dict[str, Any] = field(default_factory=dict)
     
     @property

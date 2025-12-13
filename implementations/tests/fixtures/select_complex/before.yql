@@ -1,0 +1,25 @@
+query:
+  select:
+    - customer_id: c.id
+    - customer_name: c.name
+    - order_count: "COUNT(o.id)"
+    - total_amount: "SUM(o.amount)"
+  from:
+    c: customers
+  joins:
+    - type: LEFT
+      alias: o
+      table: orders
+      on: "c.id = o.customer_id"
+  where:
+    - "c.status = 'active'"
+  group_by:
+    - c.id
+    - c.name
+  having:
+    - "COUNT(o.id) > 0"
+  order_by:
+    - field: total_amount
+      direction: DESC
+  limit: 10
+

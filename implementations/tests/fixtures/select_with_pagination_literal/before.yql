@@ -1,0 +1,12 @@
+query:
+  pagination:
+    page: 2
+    per_page: 20
+  select:
+    - id: c.id
+  from:
+    c: customers
+  order_by:
+    - field: c.id
+      direction: ASC
+

@@ -1,0 +1,19 @@
+imports:
+  - "test_import_customer_orders"
+
+query:
+  with_clauses:
+    premium_orders:
+      using: "customer_orders"
+      parameters:
+        customer_status: "premium"
+        min_order_amount: 10000
+  select:
+    - customer_id: po.customer_id
+    - customer_name: po.customer_name
+    - order_id: po.order_id
+    - amount: po.amount
+  from: { po: premium_orders }
+  order_by:
+    - field: amount
+      direction: DESC

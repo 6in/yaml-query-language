@@ -1,6 +1,6 @@
 """PostgreSQL SQL Generator."""
 
-from ..ast import SelectQuery
+from ..ast import SelectQuery, UpsertQuery
 from .base import BaseGenerator
 
 
@@ -51,4 +51,71 @@ class PostgreSQLGenerator(BaseGenerator):
                 offset_expr = f"(({page} - 1) * {per_page})"
         
         return f"LIMIT {limit_expr}\nOFFSET {offset_expr}"
-
+    
+    def _generate_upsert(self, query: UpsertQuery) -> str:
+        """Generate UPSERT statement for PostgreSQL (INSERT ... ON CONFLICT)."""
+        if not query.on_conflict:
+            raise ValueError("PostgreSQL UPSERT requires 'on_conflict' clause")
+        
+        parts = []
+        
+        # INSERT INTO table
+        parts.append(f"INSERT INTO {query.table}")
+        
+        # Columns
+        if query.columns:
+            cols = ", ".join(query.columns)
+            parts.append(f"({cols})")
+        elif query.values:
+            # Infer columns from first row
+            cols = ", ".join(query.values[0].keys())
+            parts.append(f"({cols})")
+        elif query.from_query:
+            # INSERT ... SELECT
+            if query.columns:
+                cols = ", ".join(query.columns)
+                parts.append(f"({cols})")
+        
+        # VALUES or SELECT
+        if query.from_query:
+            parts.append(self._generate_select(query.from_query))
+        elif query.values:
+            values_parts = []
+            for row in query.values:
+                vals = ", ".join(self._format_value(v) for v in row.values())
+                values_parts.append(f"({vals})")
+            parts.append("VALUES " + ", ".join(values_parts))
+        
+        # ON CONFLICT
+        conflict = query.on_conflict
+        if conflict.target:
+            parts.append(f"ON CONFLICT ({', '.join(conflict.target)})")
+        elif conflict.unique_constraint:
+            parts.append(f"ON CONFLICT ON CONSTRAINT {conflict.unique_constraint}")
+        else:
+            raise ValueError("PostgreSQL ON CONFLICT requires 'target' or 'unique_constraint'")
+        
+        # Action
+        if conflict.action == "ignore":
+            parts.append("DO NOTHING")
+        elif conflict.action == "update":
+            if not conflict.update:
+                raise ValueError("PostgreSQL ON CONFLICT UPDATE requires 'update' clause")
+            
+            update_parts = []
+            for col, val in conflict.update.items():
+                update_parts.append(f"{col} = {val}")
+            
+            update_clause = "DO UPDATE SET\n" + ",\n".join(f"  {u}" for u in update_parts)
+            
+            # Conditional update
+            if conflict.where:
+                update_clause += f"\nWHERE {conflict.where}"
+            
+            parts.append(update_clause)
+        
+        # RETURNING
+        if query.returning:
+            parts.append(self._generate_returning(query.returning))
+        
+        return "\n".join(parts)

@@ -1,0 +1,8 @@
+query:
+  select:
+    - id: c.id
+  from:
+    c: customers
+  where:
+    - "c.status = 'active'"
+

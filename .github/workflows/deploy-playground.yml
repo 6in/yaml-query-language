@@ -1,0 +1,57 @@
+name: Deploy Playground to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'implementations/playground/**'
+      - 'implementations/python/src/yql/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Rebuild YQL bundle
+        run: |
+          cd implementations/playground
+          python3 bundle_yql_tar.py
+
+      - name: Copy Playground files to docs/playground
+        run: |
+          mkdir -p docs/playground
+          cp implementations/playground/index.html docs/playground/
+          cp implementations/playground/playground.js docs/playground/
+          cp implementations/playground/playground.css docs/playground/
+          cp implementations/playground/yql-bundle.tar.gz docs/playground/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+

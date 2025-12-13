@@ -1,0 +1,9 @@
+name: "level3"
+imports:
+  - "test_deep_import_level4"
+
+select_definition:
+  select:
+    - id: l3.id
+  from: { l3: table_l3 }
+

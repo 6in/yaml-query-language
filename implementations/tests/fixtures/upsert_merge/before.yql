@@ -1,0 +1,17 @@
+operation: upsert
+table: "target: test"
+using:
+  select:
+    - id: 1
+    - name: "John"
+  from:
+    d: dual
+match_on: [id]
+when_matched:
+  update:
+    name: "source.name"
+when_not_matched:
+  insert:
+    id: "source.id"
+    name: "source.name"
+

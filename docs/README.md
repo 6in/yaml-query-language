@@ -63,6 +63,7 @@ docs/
 
 ## 関連リンク
 
+- [YQL Playground](playground/) - ブラウザ上でYQLを試せるPlaygroundツール
 - [YQL仕様書](../specs/README.md)
 - [検証サンプル](../validation/sql-test-list.md)
 - [旧仕様書](../old-specs/README.md)

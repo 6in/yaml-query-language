@@ -1,0 +1,18 @@
+name: "customer_summary"
+description: "顧客サマリー取得用のSELECT定義"
+
+select_definition:
+  select:
+    - customer_id: c.customer_id
+    - customer_name: c.name
+    - order_count: "COUNT(o.order_id)"
+    - total_amount: "SUM(o.amount)"
+  from: { c: customers }
+  joins:
+    - type: LEFT
+      alias: o
+      table: orders
+      on: "c.customer_id = o.customer_id"
+  where:
+    - "c.status = 'active'"
+  group_by: [c.customer_id, c.name]

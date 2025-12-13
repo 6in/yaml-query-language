@@ -1,0 +1,22 @@
+name: "customer_orders"
+description: "顧客の注文一覧取得用のSELECT定義（パラメータ付き）"
+
+select_definition:
+  parameters:
+    customer_status: "active"
+    min_order_amount: 0
+  select:
+    - customer_id: c.customer_id
+    - customer_name: c.name
+    - order_id: o.order_id
+    - order_date: o.order_date
+    - amount: o.amount
+  from: { c: customers }
+  joins:
+    - type: INNER
+      alias: o
+      table: orders
+      on: "c.customer_id = o.customer_id"
+  where:
+    - "c.status = #{customer_status}"
+    - "o.amount >= #{min_order_amount}"

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YQL Playground</title>
+    <link rel="stylesheet" href="playground.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>YQL Playground</h1>
+            <p class="subtitle">ブラウザ上でYQLを試せるPlaygroundツール</p>
+            <div class="controls">
+                <label for="sample-select">Sample:</label>
+                <select id="sample-select">
+                    <option value="">-- Select Sample --</option>
+                </select>
+                <label for="dialect">Database:</label>
+                <select id="dialect">
+                    <option value="postgresql">PostgreSQL</option>
+                    <option value="mysql">MySQL</option>
+                    <option value="sqlserver">SQL Server</option>
+                    <option value="oracle">Oracle</option>
+                </select>
+                <button id="run-btn" class="btn btn-primary">Run</button>
+                <button id="clear-btn" class="btn btn-secondary">Clear</button>
+            </div>
+        </header>
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Loading Pyodide...</p>
+        </div>
+        
+        <div id="editor-container" class="editor-container" style="display: none;">
+            <div class="editor-panel">
+                <h2>YQL</h2>
+                <div id="yql-editor" class="monaco-editor"></div>
+            </div>
+            <div class="result-panel">
+                <h2>Generated SQL</h2>
+                <div id="sql-output" class="monaco-editor"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Monaco Editor -->
+    <script>
+        var require = { paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+    <!-- Pyodide -->
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js" onload="console.log('Pyodide script loaded'); window.pyodideScriptLoaded = true;" onerror="console.error('Failed to load Pyodide script'); window.pyodideScriptLoaded = false;"></script>
+    <!-- Playground -->
+    <script src="playground.js"></script>
+    <!-- Note: yql-bundle.tar.gz is loaded dynamically by playground.js -->
+</body>
+</html>
+

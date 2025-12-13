@@ -1,0 +1,9 @@
+query:
+  select:
+    - id: c.id
+  from:
+    c: customers
+  order_by:
+    - field: c.created_at
+      direction: DESC
+

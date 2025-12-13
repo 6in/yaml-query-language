@@ -1,0 +1,8 @@
+operation: insert
+table: customers
+values:
+  name: "John Doe"
+returning:
+  - id
+  - created_at
+

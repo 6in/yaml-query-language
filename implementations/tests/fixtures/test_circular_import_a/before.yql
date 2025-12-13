@@ -1,0 +1,9 @@
+name: "module_a"
+imports:
+  - "test_circular_import_b"
+
+select_definition:
+  select:
+    - id: a.id
+  from: { a: table_a }
+

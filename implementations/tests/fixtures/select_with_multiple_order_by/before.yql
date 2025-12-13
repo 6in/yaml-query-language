@@ -1,0 +1,11 @@
+query:
+  select:
+    - id: c.id
+  from:
+    c: customers
+  order_by:
+    - field: c.status
+      direction: ASC
+    - field: c.created_at
+      direction: DESC
+

@@ -1,0 +1,18 @@
+imports:
+  - "test_import_customer_summary"
+
+query:
+  with_clauses:
+    customer_summary:
+      using: "customer_summary"
+  select:
+    - customer_id: cs.customer_id
+    - customer_name: cs.customer_name
+    - order_count: cs.order_count
+    - total_amount: cs.total_amount
+  from: { cs: customer_summary }
+  where:
+    - "cs.order_count > 0"
+  order_by:
+    - field: total_amount
+      direction: DESC

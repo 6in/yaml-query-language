@@ -1,0 +1,11 @@
+operation: upsert
+table: test
+values:
+  id: 1
+  name: "John"
+on_conflict:
+  target: [id]
+  action: update
+  update:
+    name: "EXCLUDED.name"
+

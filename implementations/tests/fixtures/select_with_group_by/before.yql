@@ -1,0 +1,9 @@
+query:
+  select:
+    - customer_id: o.customer_id
+    - order_count: "COUNT(*)"
+  from:
+    o: orders
+  group_by:
+    - o.customer_id
+

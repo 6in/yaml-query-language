@@ -1,0 +1,13 @@
+query:
+  select:
+    - id: c.id
+    - name: c.name
+  from:
+    c: customers
+  order_by:
+    - field: c.id
+      direction: DESC
+  pagination:
+    page: "#{page:1}"
+    per_page: "#{per_page:20}"
+

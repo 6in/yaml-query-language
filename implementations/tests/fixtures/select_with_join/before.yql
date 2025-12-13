@@ -1,0 +1,12 @@
+query:
+  select:
+    - customer_id: c.id
+    - order_id: o.id
+  from:
+    c: customers
+  joins:
+    - type: INNER
+      alias: o
+      table: orders
+      on: "c.id = o.customer_id"
+

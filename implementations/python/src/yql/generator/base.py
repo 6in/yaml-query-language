@@ -12,6 +12,7 @@ from ..ast import (
     OrderByClause,
     SelectQuery,
     UpdateQuery,
+    UpsertQuery,
     WithClause,
     YQLQuery,
 )
@@ -48,6 +49,10 @@ class BaseGenerator(ABC):
             if yql.delete_query is None:
                 raise ValueError("DELETE query is empty")
             return self._generate_delete(yql.delete_query)
+        elif yql.operation == OperationType.UPSERT:
+            if yql.upsert_query is None:
+                raise ValueError("UPSERT query is empty")
+            return self._generate_upsert(yql.upsert_query)
         else:
             raise ValueError(f"Unsupported operation: {yql.operation}")
     
@@ -215,19 +220,23 @@ class BaseGenerator(ABC):
         return "\n".join(parts)
     
     def _format_value(self, value) -> str:
-        """Format a value for SQL."""
+        """Format a value for SQL.
+        
+        Parameters, macros, and expressions are passed through as-is
+        to allow template engines to handle them.
+        """
         if value is None:
             return "NULL"
         elif isinstance(value, str):
-            if value.startswith("#{") or value.startswith("${"):
-                # Parameter placeholder
-                return "?"
-            elif value.startswith("@"):
-                # Macro reference - pass through
+            # Pass through parameters, macros, and expressions as-is
+            # This allows template engines (Jinja2, etc.) to handle them
+            if value.startswith("#{") or value.startswith("${") or value.startswith("@{"):
+                # Parameter, array parameter, or macro - pass through
                 return value
             else:
-                # String literal or expression
-                return value
+                # String literal - add quotes
+                # Note: This is for display purposes. Template engines will handle actual binding
+                return f"'{value}'"
         elif isinstance(value, bool):
             return "TRUE" if value else "FALSE"
         elif isinstance(value, (int, float)):
@@ -295,3 +304,10 @@ class BaseGenerator(ABC):
         
         return "\n".join(parts)
 
+
+    # ==================== UPSERT ====================
+    
+    @abstractmethod
+    def _generate_upsert(self, query: UpsertQuery) -> str:
+        """Generate UPSERT statement (dialect-specific)."""
+        pass

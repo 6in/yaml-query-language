@@ -1,6 +1,6 @@
 """SQL Server SQL Generator."""
 
-from ..ast import OrderByClause, SelectQuery
+from ..ast import OrderByClause, SelectQuery, UpsertQuery
 from .base import BaseGenerator
 
 
@@ -117,4 +117,51 @@ class SQLServerGenerator(BaseGenerator):
                 offset_expr = f"(({page} - 1) * {per_page})"
         
         return f"OFFSET {offset_expr} ROWS\nFETCH NEXT {per_page} ROWS ONLY"
+    
+    def _generate_upsert(self, query: UpsertQuery) -> str:
+        """Generate UPSERT statement for SQL Server (MERGE)."""
+        if not query.using or not query.match_on:
+            raise ValueError("SQL Server UPSERT requires 'using' and 'match_on' clauses")
+        
+        parts = []
+        
+        # MERGE table AS target
+        target_alias = query.alias or "target"
+        parts.append(f"MERGE {query.table} AS {target_alias}")
+        
+        # USING clause
+        using_sql = self._generate_select(query.using)
+        parts.append(f"USING ({using_sql}) AS source")
+        
+        # ON clause (match_on)
+        match_conditions = [f"{target_alias}.{col} = source.{col}" for col in query.match_on]
+        parts.append(f"ON {' AND '.join(match_conditions)}")
+        
+        # WHEN MATCHED
+        if query.when_matched:
+            matched = query.when_matched
+            if matched.delete:
+                parts.append("WHEN MATCHED THEN DELETE")
+            elif matched.update:
+                update_parts = []
+                for col, val in matched.update.items():
+                    update_parts.append(f"{col} = {val}")
+                
+                matched_clause = "WHEN MATCHED"
+                if matched.where:
+                    matched_clause += f" AND {matched.where}"
+                matched_clause += " THEN\n  UPDATE SET\n" + ",\n".join(f"    {u}" for u in update_parts)
+                parts.append(matched_clause)
+        
+        # WHEN NOT MATCHED
+        if query.when_not_matched:
+            not_matched = query.when_not_matched
+            if not_matched.insert:
+                insert_cols = list(not_matched.insert.keys())
+                insert_vals = [not_matched.insert[col] for col in insert_cols]
+                
+                parts.append(f"WHEN NOT MATCHED THEN\n  INSERT ({', '.join(insert_cols)})\n  VALUES ({', '.join(insert_vals)})")
+        
+        # Add semicolon for SQL Server
+        return "\n".join(parts) + ";"
 

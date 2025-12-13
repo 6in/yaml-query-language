@@ -1,8 +1,13 @@
 """Tests for SQL Generator."""
 
+from pathlib import Path
+
 import pytest
 
-from yql import parse, generate_sql, Dialect
+from yql import parse_file, generate_sql, Dialect
+
+# Fixture directory (shared across implementations)
+FIXTURES_DIR = Path(__file__).parent.parent.parent / "tests" / "fixtures"
 
 
 class TestGenerateBasic:
@@ -10,34 +15,16 @@ class TestGenerateBasic:
     
     def test_generate_simple_select(self):
         """Test generating simple SELECT."""
-        yql = """
-query:
-  select:
-    - id: c.id
-    - name: c.name
-  from:
-    c: customers
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "simple_select" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "SELECT" in sql
-        assert "c.id AS id" in sql
-        assert "c.name AS name" in sql
-        assert "FROM customers c" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "simple_select" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
     
     def test_generate_with_where(self):
         """Test generating SELECT with WHERE."""
-        yql = """
-query:
-  select:
-    - id: c.id
-  from:
-    c: customers
-  where:
-    - "c.status = 'active'"
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "select_with_where" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
         assert "WHERE c.status = 'active'" in sql
@@ -48,23 +35,12 @@ class TestGenerateJoin:
     
     def test_generate_inner_join(self):
         """Test generating INNER JOIN."""
-        yql = """
-query:
-  select:
-    - customer_id: c.id
-    - order_id: o.id
-  from:
-    c: customers
-  joins:
-    - type: INNER
-      alias: o
-      table: orders
-      on: "c.id = o.customer_id"
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "select_with_join" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "INNER JOIN orders o ON c.id = o.customer_id" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_join" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
     
     def test_generate_left_join(self):
         """Test generating LEFT JOIN."""
@@ -80,6 +56,7 @@ query:
       table: orders
       on: "c.id = o.customer_id"
 """
+        from yql import parse
         result = parse(yql)
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
@@ -91,6 +68,7 @@ class TestGenerateGroupBy:
     
     def test_generate_group_by(self):
         """Test generating GROUP BY."""
+        from yql import parse
         yql = """
 query:
   select:
@@ -108,23 +86,12 @@ query:
     
     def test_generate_group_by_having(self):
         """Test generating GROUP BY with HAVING."""
-        yql = """
-query:
-  select:
-    - customer_id: o.customer_id
-    - order_count: "COUNT(*)"
-  from:
-    o: orders
-  group_by:
-    - o.customer_id
-  having:
-    - "COUNT(*) > 5"
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "select_with_group_by_having" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "GROUP BY o.customer_id" in sql
-        assert "HAVING COUNT(*) > 5" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_group_by_having" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 
 
 class TestGenerateOrderBy:
@@ -132,39 +99,21 @@ class TestGenerateOrderBy:
     
     def test_generate_order_by(self):
         """Test generating ORDER BY."""
-        yql = """
-query:
-  select:
-    - id: c.id
-  from:
-    c: customers
-  order_by:
-    - field: c.created_at
-      direction: DESC
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "select_with_order_by_desc" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "ORDER BY c.created_at DESC" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_order_by_desc" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
     
     def test_generate_multiple_order_by(self):
         """Test generating multiple ORDER BY columns."""
-        yql = """
-query:
-  select:
-    - id: c.id
-  from:
-    c: customers
-  order_by:
-    - field: c.status
-      direction: ASC
-    - field: c.created_at
-      direction: DESC
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "select_with_multiple_order_by" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "ORDER BY c.status ASC, c.created_at DESC" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_multiple_order_by" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 
 
 class TestGenerateLimitOffset:
@@ -172,35 +121,21 @@ class TestGenerateLimitOffset:
     
     def test_generate_limit(self):
         """Test generating LIMIT."""
-        yql = """
-query:
-  select:
-    - id: c.id
-  from:
-    c: customers
-  limit: 10
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "select_with_limit" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "LIMIT 10" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_limit" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
     
     def test_generate_limit_offset(self):
         """Test generating LIMIT and OFFSET."""
-        yql = """
-query:
-  select:
-    - id: c.id
-  from:
-    c: customers
-  limit: 10
-  offset: 20
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "select_with_limit_offset" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "LIMIT 10" in sql
-        assert "OFFSET 20" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_limit_offset" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 
 
 class TestGenerateWithClause:
@@ -208,29 +143,12 @@ class TestGenerateWithClause:
     
     def test_generate_single_cte(self):
         """Test generating single CTE."""
-        yql = """
-query:
-  with_clauses:
-    active_customers:
-      select:
-        - id: c.id
-        - name: c.name
-      from:
-        c: customers
-      where:
-        - "c.status = 'active'"
-  select:
-    - id: ac.id
-    - name: ac.name
-  from:
-    ac: active_customers
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "select_with_cte" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        assert "WITH active_customers AS" in sql
-        assert "c.status = 'active'" in sql
-        assert "FROM active_customers ac" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_with_cte" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 
 
 class TestGenerateComplex:
@@ -238,45 +156,10 @@ class TestGenerateComplex:
     
     def test_generate_complex_query(self):
         """Test generating complex query with multiple clauses."""
-        yql = """
-query:
-  select:
-    - customer_id: c.id
-    - customer_name: c.name
-    - order_count: "COUNT(o.id)"
-    - total_amount: "SUM(o.amount)"
-  from:
-    c: customers
-  joins:
-    - type: LEFT
-      alias: o
-      table: orders
-      on: "c.id = o.customer_id"
-  where:
-    - "c.status = 'active'"
-  group_by:
-    - c.id
-    - c.name
-  having:
-    - "COUNT(o.id) > 0"
-  order_by:
-    - field: total_amount
-      direction: DESC
-  limit: 10
-"""
-        result = parse(yql)
+        result = parse_file(FIXTURES_DIR / "select_complex" / "before.yql")
         sql = generate_sql(result, Dialect.POSTGRESQL)
         
-        # Verify all parts are present
-        assert "SELECT" in sql
-        assert "c.id AS customer_id" in sql
-        assert "COUNT(o.id) AS order_count" in sql
-        assert "SUM(o.amount) AS total_amount" in sql
-        assert "FROM customers c" in sql
-        assert "LEFT JOIN orders o ON c.id = o.customer_id" in sql
-        assert "WHERE c.status = 'active'" in sql
-        assert "GROUP BY c.id, c.name" in sql
-        assert "HAVING COUNT(o.id) > 0" in sql
-        assert "ORDER BY total_amount DESC" in sql
-        assert "LIMIT 10" in sql
+        # Compare with expected SQL file
+        expected_sql = (FIXTURES_DIR / "select_complex" / "postgresql.sql").read_text().strip()
+        assert sql.strip() == expected_sql
 

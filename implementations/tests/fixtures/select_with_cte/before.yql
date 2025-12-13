@@ -1,0 +1,16 @@
+query:
+  with_clauses:
+    active_customers:
+      select:
+        - id: c.id
+        - name: c.name
+      from:
+        c: customers
+      where:
+        - "c.status = 'active'"
+  select:
+    - id: ac.id
+    - name: ac.name
+  from:
+    ac: active_customers
+

@@ -1,0 +1,7 @@
+operation: insert
+table: customers
+values:
+  id: 1
+  name: "John Doe"
+  email: "john@example.com"
+

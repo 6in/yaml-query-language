@@ -1,0 +1,8 @@
+operation: update
+table: customers
+set:
+  name: "John Doe"
+  status: "active"
+where:
+  - "id = 1"
+
