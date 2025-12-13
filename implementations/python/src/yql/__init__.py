@@ -2,8 +2,17 @@
 
 __version__ = "0.1.0"
 
+from .generator import Dialect, generate_sql
 from .parser import parse, parse_file
-from .generator import generate_sql, Dialect
+from .security import SecurityConfig, SecurityError
 
-__all__ = ["parse", "parse_file", "generate_sql", "Dialect", "__version__"]
+__all__ = [
+    "parse",
+    "parse_file",
+    "generate_sql",
+    "Dialect",
+    "SecurityConfig",
+    "SecurityError",
+    "__version__",
+]
 

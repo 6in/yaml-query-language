@@ -29,8 +29,26 @@ from .ast import (
 
 
 class ParseError(Exception):
-    """YQL parse error."""
-    pass
+    """YQL parse error.
+    
+    Attributes:
+        message: Error message
+        category: Error category (syntax_error, security_error, logic_error)
+        details: Additional error details (file path, line number, etc.)
+    """
+    def __init__(
+        self,
+        message: str,
+        category: str = "syntax_error",
+        details: dict[str, Any] | None = None,
+    ):
+        self.message = message
+        self.category = category
+        self.details = details or {}
+        super().__init__(message)
+    
+    def __str__(self) -> str:
+        return self.message
 
 
 def parse(yql_content: str, base_path: Path | None = None) -> YQLQuery:
@@ -90,7 +108,7 @@ def _parse_yql(data: dict[str, Any], base_path: Path | None = None) -> YQLQuery:
         if base_path is None:
             # If no base_path provided, try to use current working directory
             base_path = Path.cwd()
-        imported_definitions = _load_imports(imports, base_path)
+        imported_definitions = _load_imports(imports, base_path, current_file=base_path)
     
     # Determine operation type
     operation_str = data.get("operation", "").lower()
@@ -163,8 +181,10 @@ def _parse_upsert_yql(data: dict[str, Any], imported_definitions: dict[str, Any]
     on_conflict = None
     if "on_conflict" in data:
         conflict_data = data["on_conflict"]
+        # Support both 'columns' and 'target' for compatibility
+        target = conflict_data.get("target") or conflict_data.get("columns")
         on_conflict = OnConflictClause(
-            target=conflict_data.get("target"),
+            target=target,
             unique_constraint=conflict_data.get("unique_constraint"),
             action=conflict_data.get("action", "update"),
             update=conflict_data.get("update", {}),
@@ -448,7 +468,15 @@ def _parse_joins(data: list[Any]) -> list[JoinClause]:
         if not isinstance(item, dict):
             raise ParseError(f"JOIN must be a mapping: {item}")
         
-        join_type = JoinType[item.get("type", "INNER").upper()]
+        join_type_str = item.get("type", "INNER").upper()
+        try:
+            join_type = JoinType[join_type_str]
+        except KeyError:
+            valid_types = ", ".join([jt.value for jt in JoinType])
+            raise ParseError(
+                f"Invalid JOIN type '{item.get('type')}'. "
+                f"Valid types are: {valid_types}"
+            )
         alias = item.get("alias", "")
         table = item.get("table", "")
         # YAML 1.1 parses "on:" as True (boolean), so check both "on" and True keys
@@ -544,16 +572,43 @@ def _parse_having(data: list[Any] | str) -> list[str]:
 
 
 def _parse_order_by(data: list[Any]) -> list[OrderByClause]:
-    """Parse ORDER BY clause."""
+    """Parse ORDER BY clause.
+    
+    Supports multiple formats:
+    1. Full form: {field: "name", direction: "ASC"}
+    2. Short form: {name: "DESC"}
+    3. String: "name" (defaults to ASC)
+    """
     order_by = []
     
     for item in data:
         if isinstance(item, dict):
-            field = item.get("field", "")
-            direction = item.get("direction", "ASC").upper()
+            # Check if it's short form: {field_name: "DESC"}
+            # Short form has exactly one key that is not "field" or "direction"
+            keys = list(item.keys())
+            if "field" in keys:
+                # Full form: {field: "name", direction: "ASC"}
+                field = item.get("field", "")
+                direction_str = item.get("direction", "ASC").upper()
+            elif len(keys) == 1 and keys[0] not in ("field", "direction"):
+                # Short form: {field_name: "DESC"}
+                field = keys[0]
+                direction_str = str(item[field]).upper()
+            else:
+                # Invalid format
+                raise ParseError(f"Invalid ORDER BY format: {item}. Use {{field: 'name', direction: 'ASC'}} or {{name: 'DESC'}}")
+            
+            try:
+                direction = SortDirection[direction_str]
+            except KeyError:
+                valid_directions = ", ".join([sd.value for sd in SortDirection])
+                raise ParseError(
+                    f"Invalid sort direction '{direction_str}'. "
+                    f"Valid directions are: {valid_directions}"
+                )
             order_by.append(OrderByClause(
                 field=field,
-                direction=SortDirection[direction],
+                direction=direction,
             ))
         elif isinstance(item, str):
             # Simple field name (ASC by default)
@@ -564,16 +619,63 @@ def _parse_order_by(data: list[Any]) -> list[OrderByClause]:
     return order_by
 
 
-def _load_imports(imports: list[str], base_path: Path) -> dict[str, Any]:
-    """Load imported YQL files.
+def _load_imports(
+    imports: list[str],
+    base_path: Path,
+    current_file: Path | None = None,
+    depth: int = 0,
+    max_depth: int = 3,
+    max_imports: int = 10,
+    visited: set[str] | None = None,
+    import_chain: list[str] | None = None,
+) -> dict[str, Any]:
+    """Load imported YQL files with limits and circular dependency detection.
     
     Args:
         imports: List of import paths (relative to fixtures directory)
         base_path: Base path for resolving relative imports
+        current_file: Current file being parsed (for error reporting)
+        depth: Current import depth (default: 0)
+        max_depth: Maximum import depth (default: 3)
+        max_imports: Maximum number of imports per file (default: 10)
+        visited: Set of visited import paths (for circular dependency detection)
+        import_chain: List of import paths in current chain (for error reporting)
         
     Returns:
         Dictionary mapping import names to their definitions
+        
+    Raises:
+        ParseError: If import limits are exceeded or circular dependency is detected
     """
+    if visited is None:
+        visited = set()
+    if import_chain is None:
+        import_chain = []
+    
+    # Check import count limit
+    if len(imports) > max_imports:
+        raise ParseError(
+            f"Too many imports: {len(imports)} (maximum: {max_imports})",
+            category="logic_error",
+            details={"file": str(current_file) if current_file else None, "import_count": len(imports)},
+        )
+    
+    # Check depth limit
+    # depth starts at 0, so with max_depth=3:
+    # depth 0 (root) -> 1 -> 2 -> 3 (max allowed) -> 4 (should fail)
+    # depth >= max_depth でエラー（depth=3, max_depth=3ならエラー）
+    if depth >= max_depth:
+        raise ParseError(
+            f"Import depth exceeds maximum ({max_depth})",
+            category="logic_error",
+            details={
+                "file": str(current_file) if current_file else None,
+                "depth": depth,
+                "max_depth": max_depth,
+                "import_chain": import_chain,
+            },
+        )
+    
     imported_definitions = {}
     
     # Find fixtures directory (parent of base_path if base_path is in a test fixture directory)
@@ -603,7 +705,49 @@ def _load_imports(imports: list[str], base_path: Path) -> dict[str, Any]:
             full_path = full_path.with_suffix(".yql")
         
         if not full_path.exists():
-            raise ParseError(f"Import file not found: {full_path}")
+            raise ParseError(
+                f"Import file not found: {full_path}",
+                category="logic_error",
+                details={
+                    "file": str(current_file) if current_file else None,
+                    "import_path": import_path,
+                    "import_chain": import_chain,
+                },
+            )
+        
+        # Check depth limit before loading the file
+        # This ensures we check before processing nested imports
+        if depth >= max_depth:
+            raise ParseError(
+                f"Import depth exceeds maximum ({max_depth})",
+                category="logic_error",
+                details={
+                    "file": str(current_file) if current_file else None,
+                    "depth": depth,
+                    "max_depth": max_depth,
+                    "import_chain": import_chain,
+                    "import_path": import_path,
+                },
+            )
+        
+        # Check for circular dependency
+        full_path_str = str(full_path.resolve())
+        if full_path_str in visited:
+            cycle = import_chain + [full_path_str]
+            raise ParseError(
+                f"Circular dependency detected: {' -> '.join(cycle)} -> {full_path_str}",
+                category="logic_error",
+                details={
+                    "file": str(current_file) if current_file else None,
+                    "import_path": import_path,
+                    "import_chain": import_chain,
+                    "circular_path": cycle + [full_path_str],
+                },
+            )
+        
+        # Mark as visited and add to chain
+        visited.add(full_path_str)
+        new_chain = import_chain + [full_path_str]
         
         # Load and parse imported file
         try:
@@ -611,14 +755,60 @@ def _load_imports(imports: list[str], base_path: Path) -> dict[str, Any]:
             imported_data = yaml.safe_load(content)
             
             if not isinstance(imported_data, dict):
-                raise ParseError(f"Imported file must be a YAML mapping: {full_path}")
+                raise ParseError(
+                    f"Imported file must be a YAML mapping: {full_path}",
+                    category="syntax_error",
+                    details={"file": str(full_path), "import_chain": new_chain},
+                )
             
             # Extract name from imported file
             name = imported_data.get("name", full_path.stem)
+            
+            # Recursively load nested imports
+            nested_imports = imported_data.get("imports", [])
+            if nested_imports:
+                # Recursive call with depth+1 (depth limit is checked at the start of _load_imports)
+                nested_definitions = _load_imports(
+                    nested_imports,
+                    full_path.parent,
+                    current_file=full_path,
+                    depth=depth + 1,
+                    max_depth=max_depth,
+                    max_imports=max_imports,
+                    visited=visited.copy(),  # Copy to allow parallel imports
+                    import_chain=new_chain,
+                )
+                # Merge nested definitions (with name collision check)
+                for nested_name, nested_def in nested_definitions.items():
+                    if nested_name in imported_definitions:
+                        raise ParseError(
+                            f"Duplicate import name '{nested_name}' in import chain",
+                            category="logic_error",
+                            details={
+                                "file": str(current_file) if current_file else None,
+                                "import_chain": new_chain,
+                                "duplicate_name": nested_name,
+                            },
+                        )
+                    imported_definitions[nested_name] = nested_def
+            
             imported_definitions[name] = imported_data
             
         except yaml.YAMLError as e:
-            raise ParseError(f"Failed to parse import file {full_path}: {e}") from e
+            raise ParseError(
+                f"Failed to parse import file {full_path}: {e}",
+                category="syntax_error",
+                details={"file": str(full_path), "import_chain": new_chain},
+            ) from e
+        except ParseError:
+            # Re-raise ParseError with updated context
+            raise
+        except Exception as e:
+            raise ParseError(
+                f"Error loading import file {full_path}: {e}",
+                category="logic_error",
+                details={"file": str(full_path), "import_chain": new_chain},
+            ) from e
     
     return imported_definitions
 
@@ -663,6 +853,17 @@ def _apply_parameters(data: Any, provided_params: dict[str, Any], default_params
                     # Number, bool, etc. - convert to string as-is
                     formatted_value = str(param_value)
                 result = result.replace(placeholder, formatted_value)
+        
+        # Also handle ${paramArray} for array expansion (pass through as-is for now)
+        # This will be handled by SQL libraries later
+        for param_name, param_value in params.items():
+            placeholder = f"${{{param_name}}}"
+            if placeholder in result and isinstance(param_value, list):
+                # Array expansion - pass through as-is (will be handled by SQL libraries)
+                pass
+        
+        # Also handle @{macro} for macro expansion (pass through as-is for now)
+        # This will be handled by SQL libraries later
         return result
     else:
         # For other types (int, bool, etc.), return as-is

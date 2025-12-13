@@ -1,0 +1,7 @@
+name: "level4"
+
+select_definition:
+  select:
+    - id: l4.id
+  from: { l4: table_l4 }
+

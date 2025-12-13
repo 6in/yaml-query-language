@@ -234,8 +234,9 @@ class BaseGenerator(ABC):
                 # Parameter, array parameter, or macro - pass through
                 return value
             else:
-                # String literal or expression - pass through
-                return value
+                # String literal - add quotes
+                # Note: This is for display purposes. Template engines will handle actual binding
+                return f"'{value}'"
         elif isinstance(value, bool):
             return "TRUE" if value else "FALSE"
         elif isinstance(value, (int, float)):

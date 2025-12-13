@@ -5,6 +5,45 @@ import sys
 from pathlib import Path
 
 from . import __version__, parse_file, generate_sql, Dialect
+from .parser import ParseError
+
+
+def format_error(error: Exception) -> str:
+    """Format error message for better readability."""
+    if isinstance(error, ParseError):
+        # ParseErrorは既に分かりやすいメッセージを含んでいる
+        category_emoji = {
+            "syntax_error": "📝",
+            "security_error": "🔒",
+            "logic_error": "🔗",
+        }.get(error.category, "❌")
+        
+        result = f"{category_emoji} {error.category.replace('_', ' ').title()}: {error.message}"
+        
+        # デバッグ情報を追加
+        if error.details:
+            if "import_chain" in error.details and error.details["import_chain"]:
+                result += f"\n\n📋 Import chain: {' -> '.join(error.details['import_chain'])}"
+            if "file" in error.details and error.details["file"]:
+                result += f"\n📄 File: {error.details['file']}"
+            if "circular_path" in error.details:
+                result += f"\n🔄 Circular path: {' -> '.join(error.details['circular_path'])}"
+        
+        return result
+    else:
+        # その他のエラーは詳細を表示
+        import traceback
+        tb_lines = traceback.format_exception(type(error), error, error.__traceback__)
+        # 重要な行だけを抽出
+        important_lines = []
+        for line in tb_lines:
+            if any(keyword in line for keyword in ['Error:', 'ParseError', 'File "', 'yql/']):
+                important_lines.append(line.rstrip())
+        
+        if important_lines:
+            return f"❌ Error: {error}\n\n" + "\n".join(important_lines[-5:])
+        else:
+            return f"❌ Error: {error}"
 
 
 def main():
@@ -53,7 +92,9 @@ def main():
         elif args.command == "generate":
             cmd_generate(args)
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        # エラーメッセージを整形して表示
+        error_msg = format_error(e)
+        print(error_msg, file=sys.stderr)
         sys.exit(1)
 
 
