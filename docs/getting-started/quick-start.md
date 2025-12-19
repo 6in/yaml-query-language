@@ -163,8 +163,8 @@ where:
 
 ## 次のステップ
 
-- [SELECT仕様書](../../specs/select.md) - 詳細な仕様
-- [INSERT仕様書](../../specs/insert.md) - INSERT文の書き方
-- [UPDATE仕様書](../../specs/update.md) - UPDATE文の書き方
-- [DELETE仕様書](../../specs/delete.md) - DELETE文の書き方
+- [SELECT仕様書](../specs/select.md) - 詳細な仕様
+- [INSERT仕様書](../specs/insert.md) - INSERT文の書き方
+- [UPDATE仕様書](../specs/update.md) - UPDATE文の書き方
+- [DELETE仕様書](../specs/delete.md) - DELETE文の書き方
 - [ユースケース](../guides/yql-use-cases-overview.md) - 活用方法

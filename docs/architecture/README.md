@@ -58,6 +58,6 @@ YQLのシステムアーキテクチャと技術設計について説明しま�
 
 ## 関連仕様書
 
-- [specs/select.md](../../specs/select.md) - SELECT文仕様
-- [specs/schema.md](../../specs/schema.md) - スキーマ定義仕様
-- [specs/import.md](../../specs/import.md) - using/import機能仕様
+- [specs/select.md](../specs/select.md) - SELECT文仕様
+- [specs/schema.md](../specs/schema.md) - スキーマ定義仕様
+- [specs/import.md](../specs/import.md) - using/import機能仕様

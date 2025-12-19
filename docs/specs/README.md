@@ -74,7 +74,7 @@ YQLの言語仕様書です。
 
 ## 関連ドキュメント
 
-- [クイックスタート](../docs/getting-started/quick-start.md) - 基本的な使い方
-- [アーキテクチャ](../docs/architecture/README.md) - 技術設計
-- [ユースケース](../docs/guides/yql-use-cases-overview.md) - 活用方法
+- [クイックスタート](../getting-started/quick-start.md) - 基本的な使い方
+- [アーキテクチャ](../architecture/README.md) - 技術設計
+- [ユースケース](../guides/yql-use-cases-overview.md) - 活用方法
 

@@ -111,8 +111,8 @@ upsert:
 
 各DMLの詳細な方言対応は仕様書を参照してください：
 
-- [specs/select.md](../../specs/select.md) - SELECT文
-- [specs/insert.md](../../specs/insert.md) - INSERT文
-- [specs/update.md](../../specs/update.md) - UPDATE文
-- [specs/delete.md](../../specs/delete.md) - DELETE文
-- [specs/upsert.md](../../specs/upsert.md) - UPSERT文
+- [specs/select.md](../specs/select.md) - SELECT文
+- [specs/insert.md](../specs/insert.md) - INSERT文
+- [specs/update.md](../specs/update.md) - UPDATE文
+- [specs/delete.md](../specs/delete.md) - DELETE文
+- [specs/upsert.md](../specs/upsert.md) - UPSERT文

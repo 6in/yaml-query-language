@@ -33,7 +33,7 @@ query:
 | 役割 | おすすめドキュメント |
 |------|---------------------|
 | **🔰 初めての方** | [Getting Started](docs/getting-started/README.md) |
-| **👨‍💻 エンジニア** | [仕様書](specs/README.md) ・ [アーキテクチャ](docs/architecture/README.md) |
+| **👨‍💻 エンジニア** | [仕様書](docs/specs/README.md) ・ [アーキテクチャ](docs/architecture/README.md) |
 | **👔 PM / PO** | [ビジネス価値](docs/business/README.md) ・ [非エンジニア向け](docs/business/for-non-engineers.md) |
 | **📊 経営層** | [ROI・効果](docs/business/roi.md) ・ [導入戦略](docs/business/adoption-strategy.md) |
 
@@ -71,7 +71,7 @@ yql-specs/
 
 ### 今すぐできること
 
-- ✅ [仕様書](specs/README.md)を読んでYQLを理解する
+- ✅ [仕様書](docs/specs/README.md)を読んでYQLを理解する
 - ✅ AIを使ってSQL→YQL変換を試す
 - ✅ 要件整理ツールとしてYAML形式で要件を書く
 
@@ -79,8 +79,8 @@ yql-specs/
 
 ### 仕様書
 
-- [SELECT](specs/select.md) ・ [INSERT](specs/insert.md) ・ [UPDATE](specs/update.md) ・ [DELETE](specs/delete.md) ・ [UPSERT](specs/upsert.md)
-- [スキーマ定義](specs/schema.md) ・ [import機能](specs/import.md) ・ [ストアドプロシージャ](specs/procedure.md)
+- [SELECT](docs/specs/select.md) ・ [INSERT](docs/specs/insert.md) ・ [UPDATE](docs/specs/update.md) ・ [DELETE](docs/specs/delete.md) ・ [UPSERT](docs/specs/upsert.md)
+- [スキーマ定義](docs/specs/schema.md) ・ [import機能](docs/specs/import.md) ・ [ストアドプロシージャ](docs/specs/procedure.md)
 
 ### ガイド
 
