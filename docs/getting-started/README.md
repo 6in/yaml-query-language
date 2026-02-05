@@ -41,14 +41,14 @@ WHERE c.status = 'active';
 |------|-------------|------|
 | 1 | **このページ** | YQLの概要を理解 |
 | 2 | [クイックスタート](quick-start.md) | 基本的な書き方を学ぶ |
-| 3 | [SELECT仕様書](../../specs/select.md) | 詳細な仕様を確認 |
+| 3 | [SELECT仕様書](../specs/select.md) | 詳細な仕様を確認 |
 | 4 | [ユースケース](../guides/yql-use-cases-overview.md) | 活用方法を知る |
 
 ## 今すぐできること
 
 ### ✅ AIを使ってSQL→YQL変換
 
-1. [specs/select.md](../../specs/select.md) をAI（ChatGPT、Claude等）に渡す
+1. [specs/select.md](../specs/select.md) をAI（ChatGPT、Claude等）に渡す
 2. 変換したいSQLを入力
 3. YQLが生成される
 

@@ -116,7 +116,7 @@ LIMIT 10;
 
 ## ストアドプロシージャの移行
 
-ストアドプロシージャは [specs/procedure.md](../../specs/procedure.md) を使って解析・ドキュメント化できます：
+ストアドプロシージャは [specs/procedure.md](../specs/procedure.md) を使って解析・ドキュメント化できます：
 
 ```yaml
 procedures:

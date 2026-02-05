@@ -43,7 +43,7 @@ docs/
 
 ### 👨‍💻 エンジニア
 
-1. [仕様書](../specs/README.md) - YQL言語仕様
+1. [仕様書](./specs/README.md) - YQL言語仕様
 2. [アーキテクチャ](architecture/README.md) - 技術設計
 3. [セキュリティ](architecture/security.md) - セキュリティ設計
 4. [マルチDB対応](architecture/multi-db.md) - SQL方言の抽象化
@@ -64,6 +64,6 @@ docs/
 ## 関連リンク
 
 - [YQL Playground](playground/) - ブラウザ上でYQLを試せるPlaygroundツール
-- [YQL仕様書](../specs/README.md)
+- [YQL仕様書](./specs/README.md)
 - [検証サンプル](../validation/sql-test-list.md)
 - [旧仕様書](../old-specs/README.md)
