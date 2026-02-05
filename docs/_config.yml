@@ -1,0 +1,9 @@
+theme: jekyll-theme-minimal
+title: YQL (YAML Query Language)
+description: AI-native なクエリ言語
+markdown: kramdown
+url: https://6in.github.io/yaml-query-language
+baseurl: /yaml-query-language
+
+# Markdown ファイルを .html に変換
+permalink: /:name.html
