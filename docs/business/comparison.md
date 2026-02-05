@@ -1,3 +1,8 @@
+---
+layout: default
+title: Comparison
+---
+
 # 🆚 競合比較
 
 YQLと他のデータアクセス技術との比較です。

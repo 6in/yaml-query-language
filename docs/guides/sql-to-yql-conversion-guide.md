@@ -1,3 +1,8 @@
+---
+layout: default
+title: Sql To Yql Conversion Guide
+---
+
 # SQL→YQL変換における`specs/select.md`の役割
 
 ## 概要

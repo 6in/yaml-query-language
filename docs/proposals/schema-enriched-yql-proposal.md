@@ -1,3 +1,8 @@
+---
+layout: default
+title: Schema Enriched Yql Proposal
+---
+
 # スキーマ情報付与YQL提案
 
 ## 概要

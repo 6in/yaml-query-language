@@ -1,3 +1,8 @@
+---
+layout: default
+title: Stereotype Critical Analysis
+---
+
 # stereotypeアプローチの批判的検討
 
 ## 1. 問題提起の再確認

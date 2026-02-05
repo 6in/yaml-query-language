@@ -1,3 +1,8 @@
+---
+layout: default
+title: Readme
+---
+
 # 🔰 初めての方へ
 
 YQL (YAML Query Language) を初めて触る方向けのガイドです。

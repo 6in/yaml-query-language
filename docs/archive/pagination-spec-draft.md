@@ -1,3 +1,8 @@
+---
+layout: default
+title: Pagination Spec Draft
+---
+
 # YQL pagination構文 仕様書（ドラフト）
 
 ## 1. 概要

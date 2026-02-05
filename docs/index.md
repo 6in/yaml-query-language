@@ -1,3 +1,8 @@
+---
+layout: default
+title: YQL Documentation
+---
+
 # 📚 ドキュメント
 
 YQLのドキュメント一覧です。

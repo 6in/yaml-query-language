@@ -1,3 +1,8 @@
+---
+layout: default
+title: Procedure
+---
+
 # YQL ストアドプロシージャ/関数 定義仕様書
 
 ## 1. 概要

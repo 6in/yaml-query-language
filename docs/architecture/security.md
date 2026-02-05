@@ -1,3 +1,8 @@
+---
+layout: default
+title: Security
+---
+
 # 🔒 セキュリティ設計
 
 YQLは**多層防御アプローチ**でセキュリティを確保します。

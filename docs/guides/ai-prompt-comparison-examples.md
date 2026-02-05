@@ -1,3 +1,8 @@
+---
+layout: default
+title: Ai Prompt Comparison Examples
+---
+
 # AIプロンプトでの実際の違い：具体例
 
 ## 目的

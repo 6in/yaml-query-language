@@ -1,3 +1,8 @@
+---
+layout: default
+title: Schema
+---
+
 # YQL スキーマ定義 仕様書
 
 ## 1. 概要

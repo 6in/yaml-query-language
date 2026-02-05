@@ -1,3 +1,8 @@
+---
+layout: default
+title: Db Migration
+---
+
 # 🔄 DB移行支援
 
 YQLを中間形式として、データベース間の移行を支援します。

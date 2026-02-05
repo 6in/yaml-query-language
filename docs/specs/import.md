@@ -1,3 +1,8 @@
+---
+layout: default
+title: Import
+---
+
 # YQL import機能 仕様書（ドラフト）
 
 ## 1. 概要

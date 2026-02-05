@@ -1,3 +1,8 @@
+---
+layout: default
+title: Database Migration Guide
+---
+
 # YQLを使ったデータベース移行ガイド
 
 ## 1. 概要

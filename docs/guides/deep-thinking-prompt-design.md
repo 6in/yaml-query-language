@@ -1,3 +1,8 @@
+---
+layout: default
+title: Deep Thinking Prompt Design
+---
+
 # 深い考察を引き出すプロンプト設計ガイド
 
 ## 1. 概要

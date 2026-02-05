@@ -1,3 +1,8 @@
+---
+layout: default
+title: Macro Feature Analysis
+---
+
 # マクロ機能の効果分析
 
 ## 概要

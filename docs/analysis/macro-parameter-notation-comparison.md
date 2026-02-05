@@ -1,3 +1,8 @@
+---
+layout: default
+title: Macro Parameter Notation Comparison
+---
+
 # マクロ定義内のパラメータ記法の比較: `@name` vs `@{name}`
 
 ## 比較の目的

@@ -1,3 +1,8 @@
+---
+layout: default
+title: Multi Db
+---
+
 # 🌍 マルチデータベース対応
 
 YQLは同一の記述から複数のSQL方言を生成します。

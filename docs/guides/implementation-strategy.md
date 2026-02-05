@@ -1,3 +1,8 @@
+---
+layout: default
+title: Implementation Strategy
+---
+
 # YQL実装戦略
 
 ## 概要

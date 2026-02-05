@@ -1,3 +1,8 @@
+---
+layout: default
+title: Yql Use Cases Overview
+---
+
 # YQL利用用途の全体像
 
 ## 概要

@@ -1,3 +1,8 @@
+---
+layout: default
+title: Schema Driven Yql Generation
+---
+
 # スキーマ定義駆動のYQL生成アプローチ
 
 ## 概要

@@ -1,3 +1,8 @@
+---
+layout: default
+title: Macro Parameter Notation Proposal
+---
+
 # マクロ定義内のパラメータ記法の提案
 
 ## 問題点

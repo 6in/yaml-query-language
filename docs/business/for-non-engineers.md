@@ -1,3 +1,8 @@
+---
+layout: default
+title: For Non Engineers
+---
+
 # 👤 非エンジニア向けガイド
 
 PM、PO、BA、ビジネスアナリストなど、非エンジニアの方向けのYQLガイドです。

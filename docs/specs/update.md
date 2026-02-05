@@ -1,3 +1,8 @@
+---
+layout: default
+title: Update
+---
+
 # YQL UPDATE文 変換ルール仕様書
 
 ## 1. 概要

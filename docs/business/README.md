@@ -1,3 +1,8 @@
+---
+layout: default
+title: Readme
+---
+
 # 💼 ビジネス価値
 
 YQLがもたらすビジネス価値について説明します。

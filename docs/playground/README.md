@@ -1,3 +1,8 @@
+---
+layout: default
+title: Readme
+---
+
 # YQL Playground
 
 ブラウザ上でYQLを試せるPlaygroundツールです。Pyodideを使用して、サーバーサイドなしでPythonコードを実行します。

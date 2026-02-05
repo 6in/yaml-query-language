@@ -1,3 +1,8 @@
+---
+layout: default
+title: Schema Import Use Cases Analysis
+---
+
 # スキーマインポート機能の利用用途 考察
 
 ## 1. 問題提起

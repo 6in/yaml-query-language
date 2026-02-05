@@ -1,3 +1,8 @@
+---
+layout: default
+title: Readme
+---
+
 # 📋 YQL仕様書
 
 YQLの言語仕様書です。

@@ -1,3 +1,8 @@
+---
+layout: default
+title: Deployment
+---
+
 # GitHub Pages デプロイ手順
 
 ## 方法1: 自動デプロイ（推奨）

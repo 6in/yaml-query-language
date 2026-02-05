@@ -1,3 +1,8 @@
+---
+layout: default
+title: Playground Proposal
+---
+
 # YQL Playground 実装提案
 
 ## 概要

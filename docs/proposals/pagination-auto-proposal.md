@@ -1,3 +1,8 @@
+---
+layout: default
+title: Pagination Auto Proposal
+---
+
 # SELECT結果タイプ自動化機能 提案書
 
 ## 1. 問題提起

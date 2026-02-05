@@ -1,3 +1,8 @@
+---
+layout: default
+title: Schema Enriched Vs Separate Comparison
+---
+
 # スキーマ情報付与YQL vs SQL+DDL分離の比較
 
 ## 比較の目的

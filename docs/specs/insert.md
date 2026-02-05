@@ -1,3 +1,8 @@
+---
+layout: default
+title: Insert
+---
+
 # YQL INSERT文 変換ルール仕様書
 
 ## 1. 概要
